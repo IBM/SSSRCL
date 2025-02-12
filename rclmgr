@@ -1,0 +1,572 @@
+#!/usr/bin/python3
+
+import sys
+import os
+import subprocess
+import argparse
+from argparse import RawTextHelpFormatter
+import time
+import datetime
+from string import *
+import yaml
+
+
+# -----------------------------------------------------------------------------
+# Read container config
+# -----------------------------------------------------------------------------
+def readconf(input0):
+    global cfg
+
+    global UTILITY_HOSTNAME
+    global IMAGE_NAME
+    global IMAGE_VERSION
+    global SSH_PORT
+
+    UTILITY_HOSTNAME = None
+    IMAGE_NAME = None
+    IMAGE_VERSION = None
+    SSH_PORT = None
+
+    with open(input0.config_file, 'r') as ymlfile:
+        # cfg = yaml.safe_load(ymlfile, Loader=yaml.SafeLoader)
+        cfg = yaml.safe_load(ymlfile)
+
+    # Utility hostname
+    if "UTILITY_HOSTNAME" in cfg["CONTAINER"]:
+        UTILITY_HOSTNAME = cfg["CONTAINER"]["UTILITY_HOSTNAME"]
+    if UTILITY_HOSTNAME is None:
+        print("-- [ERROR] Utility hostname should be provided inside rclmgr.yml file... --")
+        sys.exit(1)
+
+    # Image Name
+    if "IMAGE_NAME" in cfg["CONTAINER"]:
+        IMAGE_NAME = str(cfg["CONTAINER"]["IMAGE_NAME"])
+    if IMAGE_NAME is None:
+        print("-- [ERROR] Image name should be provided inside rclmgr.yml file... --")
+        sys.exit(1)
+
+    # Image Version
+    if "IMAGE_VERSION" in cfg["CONTAINER"]:
+        IMAGE_VERSION = str(cfg["CONTAINER"]["IMAGE_VERSION"])
+    if IMAGE_VERSION is None:
+        print("-- [ERROR] Image version should be provided inside rclmgr.yml file... --")
+
+    # SSH Port, default 10022
+    if "SSH_PORT" in cfg["CONTAINER"]:
+        SSH_PORT = str(cfg["CONTAINER"]["SSH_PORT"])
+    if SSH_PORT is None:
+        print("-- [ERROR] API Server port should be provided inside apimgr.yml file... --")
+        sys.exit(1)
+
+    checkdir()
+
+
+# -----------------------------------------------------------------------------
+# Check if required directories exists
+# -----------------------------------------------------------------------------
+def checkdir():
+    if not (os.path.isdir(cfg["CONTAINER"]["LOG"])):
+        os.makedirs(cfg["CONTAINER"]["LOG"])
+        print("-- [INFO] Log directory does not exist, created now --")
+    if not (os.path.isdir(cfg["CONTAINER"]["BKUP"])):
+        os.makedirs(cfg["CONTAINER"]["BKUP"])
+        print("-- [INFO] Backup directory does not exist, created now --")
+
+
+# -----------------------------------------------------------------------------
+# Depreciation warning
+# -----------------------------------------------------------------------------
+def rclmgr_EOL_warning():
+    ALLOW_RCLMGR = os.getenv('ALLOW_RCLMGR')
+    if ALLOW_RCLMGR is None:
+        print("-- [ERROR] You cannot run rclmgr directly, use startRCLcont instead")
+        print("           If you still want to run rclmgr directly, set ALLOW_RCLMGR to value 1 on the shell")
+        print("           but be aware this is not supported and any error you encounter you need to run with startRCLcont")
+        time.sleep(2)
+        sys.exit(1)
+    elif ALLOW_RCLMGR == "1":
+        print(
+            "-- [WARNING] You should not run rclmgr directly, use startRCLcont instead")
+        print(
+            "-- [WARNING] rclmgr it is going to be depreciated in a future release")
+        print(
+            "-- [WARNING] Be aware that any error you encounter you need to reproduce running startRCLcont")
+        time.sleep(5)
+    else:
+        print("-- [ERROR] You cannot run rclmgr directly, use startRCLcont instead")
+        print("           If you still want to run rclmgr directly, set ALLOW_RCLMGR to value 1 on the shell")
+        print("           Now it has a value but it is not set to '1'.")
+        print("           Be aware this is not supported and any error you encounter you need to run with startRCLcont")
+        time.sleep(2)
+        sys.exit(1)
+
+# -----------------------------------------------------------------------------
+# Clean nftables
+# -----------------------------------------------------------------------------
+def clean_nftables():
+    if ( subprocess.call("which nft > /dev/null 2>&1", shell=True) == 0 ):
+        cmd = "nft -a list chain ip nat PREROUTING 2> /dev/null | grep 'NETAVARK-HOSTPORT-DNAT' > /dev/null 2>&1 && " + \
+                "nft delete rule ip nat PREROUTING handle " + \
+                "$(nft -a list chain ip nat PREROUTING | grep 'NETAVARK-HOSTPORT-DNAT' " + \
+                "| awk '{print $(NF)}') 2> /dev/null || true"
+        subprocess.call(cmd, shell=True)
+        cmd = "nft -a list chain ip nat OUTPUT 2> /dev/null | grep 'NETAVARK-HOSTPORT-DNAT' > /dev/null 2>&1 && " + \
+                "nft delete rule ip nat OUTPUT handle " + \
+                "$(nft -a list chain ip nat OUTPUT | grep 'NETAVARK-HOSTPORT-DNAT' " + \
+                "| awk '{print $(NF)}') 2> /dev/null || true"
+        subprocess.call(cmd, shell=True)
+        cmd = "nft delete chain ip nat NETAVARK-HOSTPORT-DNAT 2> /dev/null  || true"
+        subprocess.call(cmd, shell=True)
+        cmd = "nft -a list chain ip nat POSTROUTING 2> /dev/null | grep 'NETAVARK-HOSTPORT-MASQ' > /dev/null 2>&1 && " + \
+                "nft delete rule ip nat POSTROUTING handle " + \
+                "$(nft -a list chain ip nat POSTROUTING | grep 'NETAVARK-HOSTPORT-MASQ' " + \
+                "| awk '{print $(NF)}') 2> /dev/null || true"
+        subprocess.call(cmd, shell=True)
+        cmd = "nft delete chain ip nat NETAVARK-HOSTPORT-MASQ 2> /dev/null  || true"
+        subprocess.call(cmd, shell=True)
+        cmd = "nft delete chain ip nat NETAVARK-DN-1D8721804F16F 2> /dev/null || true"
+        subprocess.call(cmd, shell=True)
+        cmd = "nft delete chain ip nat NETAVARK-HOSTPORT-SETMARK 2> /dev/null || true"
+        subprocess.call(cmd, shell=True)
+        cmd = "nft -a list chain ip nat POSTROUTING 2> /dev/null | grep 'NETAVARK-1D8721804F16F' > /dev/null 2>&1 && " + \
+                "nft delete rule ip nat POSTROUTING handle " + \
+                "$(nft -a list chain ip nat POSTROUTING | grep 'NETAVARK-1D8721804F16F' " + \
+                "| awk '{print $(NF)}') 2> /dev/null || true"
+        subprocess.call(cmd, shell=True)
+        cmd = "nft delete chain ip nat NETAVARK-1D8721804F16F 2> /dev/null || true"
+        subprocess.call(cmd, shell=True)
+        cmd = "nft -a list chain ip filter FORWARD 2> /dev/null | grep 'NETAVARK_FORWARD' > /dev/null 2>&1 && " + \
+                "nft delete rule ip filter FORWARD handle " + \
+                "$(nft -a list chain ip filter FORWARD | grep 'NETAVARK_FORWARD' " + \
+                "| awk '{print $(NF)}') 2> /dev/null || true"
+        subprocess.call(cmd, shell=True)
+        cmd = "nft delete chain ip filter NETAVARK_FORWARD 2> /dev/null || true"
+        subprocess.call(cmd, shell=True)
+
+# -----------------------------------------------------------------------------
+# Run Container
+# -----------------------------------------------------------------------------
+def run_container(force, is_startrclcont=False):
+    global UTILITY_HOSTNAME
+    global SSH_PORT
+    global IMAGE_NAME
+    global IMAGE_VERSION
+
+    rc = 1
+
+    if not is_startrclcont:
+        rclmgr_EOL_warning()
+
+    # not needed anymore since we changed the port for http within container
+    # rc += guiAndNftable()
+
+    print("-- [INFO] Going to run container image - " + IMAGE_NAME + ":" +
+          str(IMAGE_VERSION))
+
+    if force:
+        print(
+            "-- [WARNING] Running container with -x or --force option will remove old EXIT state container --")
+        cmd = "systemctl --user stop container-" +cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + " && "\
+            "podman container rm -f " + cfg["CONTAINER"]["CONTAINER_HOSTNAME"]
+        subprocess.call(cmd, shell=True)
+
+    cmd = "podman ps -a --format {{.Names}} --filter name=" + \
+        cfg["CONTAINER"]["CONTAINER_HOSTNAME"]
+    returned_output = subprocess.check_output(cmd, shell=True)
+
+    if (returned_output != "".encode()):
+        print("-- [INFO] Container \'" +
+              cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + "\' already exists --")
+        cmd = "podman ps -a --format {{.Status}} --filter name=" + \
+            cfg["CONTAINER"]["CONTAINER_HOSTNAME"]
+        returned_output = subprocess.check_output(cmd, shell=True)
+
+        if "Exited".encode() in returned_output:
+            # Deleting all Virtual interface related to Management Interface
+            # cleanup_virtual_interfaces()
+            print(
+                "-- [INFO] Already installed container found on EXIT state. " +
+                "Trying to restart the existing container --"
+            )
+            print(
+                "-- [INFO] It will be a same old container which was " +
+                "exited earlier with all data intact --"
+            )
+            time.sleep(3)
+            clean_nftables()
+
+            cmd = "systemctl --user start container-" + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service "
+            subprocess.call(cmd, shell=True)
+        elif "Created".encode() in returned_output:
+            # Deleting all Virtual interface related to Management Interface
+            # cleanup_virtual_interfaces()
+            print(
+                "-- [INFO] Already installed container found on CREATED state. " +
+                "Trying to start the existing container --")
+            time.sleep(3)
+            clean_nftables()
+
+            cmd = "systemctl --user start container-" + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service "
+            subprocess.call(cmd, shell=True)
+        else:
+            print(
+                "-- [INFO] Container with ACTIVE state found. Trying to attach the existing container --")
+
+        print("-- [INFO] Container resumes/started. Please check \"systemctl --user status container-" + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service\" ")
+        print("-- [INFO] Re-login to container using \"podman exec -it " + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + " /bin/bash\" command --")
+    else:
+        # Deleting all Virtual interface related to Management Interface
+        # cleanup_virtual_interfaces()
+        print("-- [INFO] Automatic initialization of the container begin shortly --")
+        print("-- [INFO] Please be patient as the startup can take a few minutes --")
+        time.sleep(3)
+
+        clean_nftables()
+
+        # ------------------------------------
+        # Reading serial number of utility host
+        # ------------------------------------
+        serial = ""
+        cmd = "sudo cat /sys/devices/virtual/dmi/id/product_serial"
+        serial = subprocess.check_output(cmd, shell=True)
+        if (serial == "".encode()):
+            print("-- [ERROR] Not able to read the serial number of the IBM Utility host... --")
+            sys.exit(1)
+
+        # ------------------------------------
+        # Forming correct podman run command.
+        # ------------------------------------
+        cmd = "podman create --syslog" + \
+            " --hostname=\"" + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + '.' + cfg["CONTAINER"]["CONTAINER_DOMAIN_NAME"] + "\"" + \
+            " --name " + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + \
+            " -v /dev/log:/dev/log" + \
+            " -v /var/log/messages:/var/log/messages" + \
+            " -v " + cfg["CONTAINER"]["LOG"] + ":/var/log/" + \
+            " -v " + cfg["CONTAINER"]["BKUP"] + ":/home/backup/" + \
+            " -v /sys/fs/cgroup:/sys/fs/cgroup:ro"
+
+        container_env_details = \
+            " --env \"UTILITY_HOSTNAME=" + UTILITY_HOSTNAME + "\"" + \
+            " --env \"UTILITY_CAMPUS_IP=" + cfg["CONTAINER"]["CAMPUS_INTERFACE_IP"] + "\"" + \
+            " --env \"UTILITY_RAS_IP=" + cfg["CONTAINER"]["RAS_INTERFACE_IP"] + "\"" + \
+            " --env \"CONTAINER_HOSTNAME=" + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + "\"" + \
+            " --env \"CONTAINER_DOMAIN_NAME=" + cfg["CONTAINER"]["CONTAINER_DOMAIN_NAME"] + "\"" + \
+            " --env \"UTILITY_HOST_SERIAL=" + serial.decode('utf-8').strip() + "\""
+
+        if "CONTAINER_NETWORK_NAME" in cfg["CONTAINER"]:
+            network = " --net " + \
+                cfg["CONTAINER"]["CONTAINER_NETWORK_NAME"] + " "
+            cmd += network
+
+        cmd += container_env_details
+        container_ports_details = " -p " + SSH_PORT + ":" + "10023" + "/tcp"
+        cmd += container_ports_details
+
+        cmd += " --sysctl net.ipv6.conf.all.disable_ipv6=1"
+        cmd += " " + IMAGE_NAME + ":" + str(IMAGE_VERSION)
+
+        rc = subprocess.call(cmd, shell=True)
+
+        print("-- [INFO] Setting RCL Container to start as a systemd service --")
+        print("-- [INFO] RCL Container set to autostart --")
+
+        cmd = "cd ~; "
+        cmd += "podman generate systemd --files --name " + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + "; "
+        cmd += "mkdir -p ~/.config/systemd/user; "
+        cmd += "cp -f ~/container-" +  cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service ~/.config/systemd/user/ ; "
+        cmd += "rm -f ~/container-"+ cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service ; "
+        cmd += "systemctl --user enable container-" + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service ; "
+        cmd += "loginctl enable-linger rcladmin ; "
+        cmd += "systemctl --user status container-"+ cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service"
+        rc = subprocess.call(cmd, shell=True)
+
+        print("-- [INFO] Container created in background. Please check \"systemctl --user start container-" + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service\" to start using container. --")
+        print("-- [INFO] Login to container using \"podman exec -it " + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + " /bin/bash\" command --")
+    return rc
+
+# -----------------------------------------------------------------------------
+# Install Image
+# -----------------------------------------------------------------------------
+def installimage(image_file_name, force):
+    global IMAGE_VERSION
+    rc = 1
+
+    if force:
+        print("-- [WARNING] Running image installation with -x or --force option will remove older IMAGE forcibly --")
+        cmd = "podman image rm -f " + IMAGE_NAME + ":" + IMAGE_VERSION
+        rc = subprocess.call(cmd, shell=True)
+        if rc != 0:
+            print("-- [INFO] Removal of the podman image failed. Image doesn't exist... --")
+
+    # RESTORE CONTAINER IMAGE
+    print("-- [INFO] Installing container image " + image_file_name)
+    cmd = "podman image load -i " + image_file_name
+    returned_output = str(
+        subprocess.check_output(
+            cmd, shell=True), 'utf-8')
+    cmd = "echo \"" + returned_output.rstrip() + \
+        "\" | grep \"Loaded image(s):\" | awk -F\": \" '{print $2, $3}'"
+    _image_id = str(subprocess.check_output(cmd, shell=True), 'utf-8')
+    cmd = "podman images -nq " + _image_id
+    IMAGE_ID = str(subprocess.check_output(cmd, shell=True), 'utf-8')
+
+    print("-- [INFO] Image restored, image_id: " + IMAGE_ID)
+    print("-- [INFO] Successfully restored image " + image_file_name +
+          " into repository " + _image_id.strip())
+
+    if IMAGE_VERSION is not None:
+        print("-- [INFO] Adding TAG name: " + IMAGE_VERSION + " --")
+        cmd = "podman image tag " + _image_id.strip() + " " + IMAGE_VERSION
+        _rc = subprocess.call(cmd, shell=True)
+        if _rc == 0:
+            print(
+                "-- [INFO] Added tag " +
+                IMAGE_VERSION +
+                " to image_id " +
+                IMAGE_ID +
+                " --")
+        else:
+            print(
+                "-- [ERROR] Could not add tag " +
+                IMAGE_VERSION +
+                " to image_id " +
+                IMAGE_ID +
+                " --")
+        rc = _rc
+    ### END of RUN IMAGE ####
+    return rc
+
+
+# -----------------------------------------------------------------------------
+# Check for enough free space
+# -----------------------------------------------------------------------------
+def free_space_check():
+    print("-- [INFO] Checking if enough free space in /home --")
+    free_space_check = "df -k --output=avail /home | tail -n1"
+    output = subprocess.check_output(free_space_check, shell=True)
+    # print(int(output))
+    if (int(output) > 2000000):
+        print("-- [INFO] Free space check PASSED --")
+    else:
+        print(
+            "-- [ERROR]:Not enough space in /home - Please fix and re-run installer --")
+        sys.exit(1)
+
+
+# -----------------------------------------------------------------------------
+# Check for podman installation
+# -----------------------------------------------------------------------------
+def check_for_podman():
+    print(
+        "-- [INFO] Checking for podman version installed or needs update  on node --")
+    cmd = "cat /etc/redhat-release"
+    output = subprocess.check_output(cmd, shell=True)
+    returned_output = output.rstrip()
+    if "Red Hat Enterprise Linux release 8.8 (Ootpa)" in returned_output:
+        print("Upgrading podman for RHEL 8 if required...")
+        cmd = "tar zxvf podman_rh8.tgz ; cd data/podman_rh8/ ; yum -y install podman* > /dev/null 2>&1"
+        subprocess.call(cmd, shell=True)
+
+    cmd = "podman --version"
+    subprocess.call(cmd, shell=True)
+    print(returned_output)
+
+
+# -----------------------------------------------------------------------------
+# create_network
+# Create podman CNI network.
+# -----------------------------------------------------------------------------
+def create_network(network_name):
+    cmd = "podman network create " + network_name
+    rc = subprocess.call(cmd, shell=True)
+    if rc != 0:
+        print(
+            "-- [ERROR] Unable to cretae the podman CNI network " +
+            network_name +
+            " --")
+        print(
+            "-- [ERROR] Network either exist or some issue with network creation. --")
+    return rc
+
+
+# -----------------------------------------------------------------------------
+# delete_network
+# Delete the podman CNI network.
+# -----------------------------------------------------------------------------
+def delete_network(network_name):
+    cmd = "podman network remove " + network_name
+    rc = subprocess.call(cmd, shell=True)
+    if rc != 0:
+        print(
+            "-- [ERROR] Unable to delete the podman CNI network " +
+            network_name +
+            " --")
+        print(
+            "-- [ERROR] Network either exist and in use by container or some issue with network creation. --")
+        print("-- [ERROR] Please inspect the running container make sure the network is not in use before deletion. --")
+    return rc
+
+
+# -----------------------------------------------------------------------------
+# Defect - 315692 - nftables needs to be restarted and gui stopped before container starts
+# -----------------------------------------------------------------------------
+def guiAndNftable():
+    rc = 0
+    cmd = "systemctl is-active gpfsgui "
+    guiStatus = subprocess.call(cmd, shell=True)
+    if guiStatus == 0:
+        print(
+        "-- [ERROR] gpfsgui service is active, please stop it before starting container --")
+        rc += 1
+        sys.exit(rc)
+
+    cmd = "systemctl restart nftables "
+    rc = subprocess.call(cmd, shell=True)
+    if rc != 0:
+        print(
+            "-- [ERROR] Unable to restart nftables service --")
+    return rc
+
+
+# -----------------------------------------------------------------------------
+# main
+# -----------------------------------------------------------------------------
+def main():
+    global IMAGE_NAME
+    global IMAGE_VERSION
+
+    parser = argparse.ArgumentParser(
+        epilog='This script run Remote Code Load Service Container image for EMS node.')
+
+    parser.add_argument('-c', '--config', action='store',
+                        default="rclmgr.yml", dest='config_file',
+                        required=False,
+                        help='Specify custom Config file name. '
+                        'Default: rclmgr.yml')
+
+    parser.add_argument('-x', '--force', action='store_true',
+                        default=False, dest='force',
+                        required=False,
+                        help='Container operation with force.')
+
+    mutual_group = parser.add_mutually_exclusive_group(required=True)
+
+    mutual_group.add_argument('-i', '--install', action='store_true',
+                              default=False, dest='install',
+                              required=False,
+                              help='Install container image.')
+    parser.add_argument('-f', '--file', action='store',
+                        default=None, dest='image_file_name',
+                        required=False,
+                        help='Specify the Image file name in tarball format.')
+
+    mutual_group.add_argument('-n', '--create-network', action='store_true',
+                              default=False, dest='create_network',
+                              required=False,
+                              help='Creates podman CNI network other than default podman CNI network')
+    parser.add_argument('-net', '--network-name', action='store',
+                        default="rcl_network", dest='network_name',
+                        required=False,
+                        help='Creates podman CNI network with default name rcl_network.')
+
+    mutual_group.add_argument('-r', '--run', action='store_true',
+                              default=False, dest='run',
+                              required=False,
+                              help='Runs Remote Code Load Service Container.')
+
+    input0 = parser.parse_args()
+    readconf(input0)
+
+    allow_rclmgr = os.getenv('ALLOW_RCLMGR')
+    if allow_rclmgr is None:
+        print(
+            "-- [WARNING] The tool 'rclmgr' has been deprecated from 6.2.3.0 and newer. " +
+            "Please use 'startRCLcont' instead. --"
+        )
+        sys.exit(0)
+    elif allow_rclmgr == "1":
+        print(
+            "-- [WARNING] The tool 'rclmgr' has been deprecated from 6.2.3.0 and newer. " +
+            "Proceeding to use rclmgr since you are focing it by export ALLOW_RCLMGR=1. " +
+            "Please avoid using this flag out of an IBM facility. --"
+        )
+    else:
+        print(
+            "-- [WARNING] The tool 'rclmgr' has been deprecated from 6.2.3.0 and newer. " +
+            "Please use 'startRCLcont' instead. --"
+        )
+        sys.exit(0)
+
+    # -------------------
+    # Install Image
+    # -------------------
+    if input0.install:
+        if (input0.image_file_name is None and IMAGE_NAME is None):
+            print("-- [ERROR] Image tarball name using -f option or IMAGE_NAME should be inside rclmgr.yml")
+            sys.exit(1)
+        elif (input0.image_file_name is None and IMAGE_NAME is not None):
+            print("-- [INFO] Goint to pull Remoet Code Load Service Container image from IBM repository... --")
+            if IMAGE_VERSION == None:
+                print("-- [ERROR] Image version should be provided inside rclmgr.yml file... --")
+                sys.exit(1)
+            cmd = ""
+            if input0.force:
+                print("-- [WARNING] Going to forcibly remove the container image " + IMAGE_NAME + ":" + IMAGE_VERSION + "... --")
+                cmd = "podman image rm -f " + IMAGE_NAME + ":" + IMAGE_VERSION
+                rc = subprocess.call(cmd, shell=True)
+                if rc != 0:
+                    print("-- [INFO] Removal of the podman image failed. Image doesn't exist... --")
+            cmd = "podman pull " + IMAGE_NAME + ":" + IMAGE_VERSION
+            rc = subprocess.call(cmd, shell=True)
+            if rc != 0:
+                print("-- [ERROR] Failed to pull service container image from IBM repository... --")
+                sys.exit(1)
+            else:
+                print("-- [INFO] Service container image has been pulled successfully... --")
+                print("-- [INFO] run ./rclmgr -r to setup the service container... ---")
+                sys.exit(0)
+        elif (input0.image_file_name is not None):
+            print("-- [INFO] Going to install image from local file installation method --")
+            rc = installimage(input0.image_file_name, input0.force)
+            sys.exit(rc)
+        else:
+            print("-- [ERROR] Image tarball name using -f option or IMAGE_NAME should be inside rclmgr.yml")
+            sys.exit(1)
+
+    # -------------------
+    # Running Container
+    # -------------------
+    if input0.run:
+        # check_for_podman(input0)
+        rc = 0
+        rc += run_container(input0.force)
+        sys.exit(rc)
+
+    # -------------------
+    # Create EMS networks
+    # -------------------
+    if input0.create_network:
+        rc = delete_network(input0.network_name)
+        if rc != 0:
+            print(" --[INFO] Contunuing to create the network --")
+        rc = create_network(input0.network_name)
+        sys.exit(rc)
+
+
+if __name__ == '__main__':
+    try:
+        rc1 = main()
+        if rc1 > 0:
+            sys.exit(rc1)
+
+    except KeyboardInterrupt:
+        print("\n", datetime.datetime.now().isoformat(),
+              "Current task interrupted by user. ")
+        sys.exit(1)
+    except Exception as err:
+        print("\n", datetime.datetime.now().isoformat(),
+              "Current task terminated due to exception.")
+        print(err)
+        sys.exit(1)
+    finally:
+        sys.exit(1)
