@@ -1,0 +1,45 @@
+%YAML 1.1
+---
+
+CONTAINER:
+    # Hostname and nick name of the container
+    CONTAINER_HOSTNAME: utilityBareMetal-rcl-official
+    CONTAINER_DOMAIN_NAME: gpfs.local
+
+    # ------------------------------------------------------
+    # Optional container network.
+    # Make sure the network has been create prior using rclmgr command.
+    # By default podman default CNI network will be used
+    # ------------------------------------------------------
+    # CONTAINER_NETWORK_NAME: ess_network
+    # ------------------------------------------------------
+
+    # Installer node hostname and the
+    # IP address of Mgmt and the FSP/BMC interface
+    UTILITY_HOSTNAME: utilityBareMetal
+
+    CAMPUS_INTERFACE: campus
+    CAMPUS_INTERFACE_IP: 9.114.12.77
+
+    RAS_INTERFACE: virbr1
+    RAS_INTERFACE_IP: 10.23.16.1
+
+    # ------------------------------------------------------
+    # SSH Port, Default 10022
+    # ------------------------------------------------------
+    SSH_PORT: 10022
+
+    # ------------------------------------------------------
+    # Container image version detail
+    # ------------------------------------------------------
+    # Image Name
+    IMAGE_NAME: quay.io/sumitkuo_ibm/rcl_6.2.3.0
+
+    # Image Version
+    IMAGE_VERSION: 0121-04
+
+    # ----------------------------------
+    # log and backup location. These are the location on the container hosting node.
+    # ----------------------------------
+    LOG: /home/rcladmin/log
+    BKUP: /home/rcladmin/backup
