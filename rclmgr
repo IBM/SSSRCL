@@ -259,7 +259,7 @@ def run_container(force, is_startrclcont=False):
             cmd += network
 
         cmd += container_env_details
-        container_ports_details = " -p " + SSH_PORT + ":" + "10023" + "/tcp"
+        container_ports_details = " -p " + SSH_PORT + ":" + "22" + "/tcp"
         cmd += container_ports_details
 
         cmd += " --sysctl net.ipv6.conf.all.disable_ipv6=1"
