@@ -234,7 +234,7 @@ def run_container(force, is_startrclcont=False):
             sys.exit(1)
 
         # ------------------------------------
-        # Forming correct podman run command.
+        # Forming correct podman create command.
         # ------------------------------------
         cmd = "podman create --syslog" + \
             " --hostname=\"" + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + '.' + cfg["CONTAINER"]["CONTAINER_DOMAIN_NAME"] + "\"" + \
