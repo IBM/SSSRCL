@@ -246,6 +246,7 @@ def run_container(force, is_startrclcont=False):
             " -v /sys/fs/cgroup:/sys/fs/cgroup:ro"
 
         container_env_details = \
+            " --env \"RCL_CONTAINER=Y\"" + \
             " --env \"UTILITY_HOSTNAME=" + UTILITY_HOSTNAME + "\"" + \
             " --env \"UTILITY_CAMPUS_IP=" + cfg["CONTAINER"]["CAMPUS_INTERFACE_IP"] + "\"" + \
             " --env \"UTILITY_RAS_IP=" + cfg["CONTAINER"]["RAS_INTERFACE_IP"] + "\"" + \
