@@ -33,10 +33,10 @@ CONTAINER:
     # Container image version detail
     # ------------------------------------------------------
     # Image Name
-    IMAGE_NAME: quay.io/sumitkuo_ibm/rcl_6.2.3.0
+    IMAGE_NAME: cp.stg.icr.io/cp/scalesystem/rcl_6.2.3.0
 
     # Image Version
-    IMAGE_VERSION: 0121-04
+    IMAGE_VERSION: 0403-09
 
     # ----------------------------------
     # log and backup location. These are the location on the container hosting node.
