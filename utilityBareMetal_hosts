@@ -1,0 +1,12 @@
+127.0.0.1  localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1     localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+# ****************************************************************************
+# IBM Utility Node (where EMSVM-23E running)
+# ****************************************************************************
+10.23.16.1 utilityBareMetal
+
+# ****************************************************************************
+# EMSVM-23E RAS IP - Change below IP to correct EMSVM-23E "ras" interface IP.
+# ****************************************************************************
+10.23.16.2 emsvm
