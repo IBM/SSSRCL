@@ -288,7 +288,8 @@ def run_container(force, is_startrclcont=False):
 # -----------------------------------------------------------------------------
 # Install Image
 # -----------------------------------------------------------------------------
-def installimage(image_file_name, force):
+def install_image_from_file(image_file_name, force):
+    global IMAGE_NAME
     global IMAGE_VERSION
     rc = 1
 
@@ -305,24 +306,23 @@ def installimage(image_file_name, force):
     returned_output = str(
         subprocess.check_output(
             cmd, shell=True), 'utf-8')
-    cmd = "echo \"" + returned_output.rstrip() + \
-        "\" | grep \"Loaded image(s):\" | awk -F\": \" '{print $2, $3}'"
-    _image_id = str(subprocess.check_output(cmd, shell=True), 'utf-8')
-    cmd = "podman images -nq " + _image_id
-    IMAGE_ID = str(subprocess.check_output(cmd, shell=True), 'utf-8')
 
-    print("-- [INFO] Image restored, image_id: " + IMAGE_ID)
-    print("-- [INFO] Successfully restored image " + image_file_name +
-          " into repository " + _image_id.strip())
+    # img_tag=$(echo "Loaded image: cp.stg.icr.io/cp/scalesystem/sss_rcl:6.2.3.0" | grep "Loaded image" | awk -F": " '{print $2}')
+    cmd = "echo \"" + returned_output.rstrip() + "\" | grep \"Loaded image\" | awk -F\": \" '{print $2}'"
+    _image_url = str(subprocess.check_output(cmd, shell=True), 'utf-8').strip()
 
-    if IMAGE_VERSION is not None:
-        print("-- [INFO] Adding TAG name: " + IMAGE_VERSION + " --")
-        cmd = "podman image tag " + _image_id.strip() + " " + IMAGE_VERSION
+    cmd = "podman images -nq " + _image_url
+    IMAGE_ID = str(subprocess.check_output(cmd, shell=True), 'utf-8').strip()
+    print("-- [INFO] Successfully restored image " + image_file_name + " into local machine with image url " + _image_url + ", image id is " + IMAGE_ID)
+
+    if IMAGE_NAME is not None and IMAGE_VERSION is not None:
+        print("-- [INFO] Adding TAG name: " + IMAGE_NAME +":" + IMAGE_VERSION + " to image id " + IMAGE_ID + "--")
+        cmd = "podman image tag " + IMAGE_NAME + ":" + IMAGE_VERSION + " " + IMAGE_ID
         _rc = subprocess.call(cmd, shell=True)
         if _rc == 0:
             print(
                 "-- [INFO] Added tag " +
-                IMAGE_VERSION +
+                IMAGE_NAME + ":" + IMAGE_VERSION +
                 " to image_id " +
                 IMAGE_ID +
                 " --")
@@ -337,6 +337,38 @@ def installimage(image_file_name, force):
     ### END of RUN IMAGE ####
     return rc
 
+# -----------------------------------------------------------------------------
+# Install Image
+# -----------------------------------------------------------------------------
+def install_image_from_repo(force):
+    global IMAGE_NAME
+    global IMAGE_VERSION
+    rc = 1
+
+    print("-- [INFO] Goint to pull Remoet Code Load Service Container image from IBM repository... --")
+    if IMAGE_VERSION == None:
+        print("-- [ERROR] Image version should be provided inside rclmgr.yml file... --")
+        sys.exit(1)
+
+    cmd = ""
+    if force:
+        print("-- [WARNING] Going to forcibly remove the container image " + IMAGE_NAME + ":" + IMAGE_VERSION + "... --")
+        cmd = "podman image rm -f " + IMAGE_NAME + ":" + IMAGE_VERSION
+        rc = subprocess.call(cmd, shell=True)
+        if rc != 0:
+            print("-- [INFO] Removal of the podman image failed. Image doesn't exist... --")
+
+    cmd = "podman pull " + IMAGE_NAME + ":" + IMAGE_VERSION
+    rc = subprocess.call(cmd, shell=True)
+    if rc != 0:
+        print("-- [ERROR] Failed to pull service container image from IBM repository... --")
+        rc = 1
+    else:
+        print("-- [INFO] Service container image has been pulled successfully... --")
+        print("-- [INFO] run ./rclmgr -r to setup the service container... ---")
+        rc = 0
+
+    return rc
 
 # -----------------------------------------------------------------------------
 # Check for enough free space
@@ -506,29 +538,11 @@ def main():
             print("-- [ERROR] Image tarball name using -f option or IMAGE_NAME should be inside rclmgr.yml")
             sys.exit(1)
         elif (input0.image_file_name is None and IMAGE_NAME is not None):
-            print("-- [INFO] Goint to pull Remoet Code Load Service Container image from IBM repository... --")
-            if IMAGE_VERSION == None:
-                print("-- [ERROR] Image version should be provided inside rclmgr.yml file... --")
-                sys.exit(1)
-            cmd = ""
-            if input0.force:
-                print("-- [WARNING] Going to forcibly remove the container image " + IMAGE_NAME + ":" + IMAGE_VERSION + "... --")
-                cmd = "podman image rm -f " + IMAGE_NAME + ":" + IMAGE_VERSION
-                rc = subprocess.call(cmd, shell=True)
-                if rc != 0:
-                    print("-- [INFO] Removal of the podman image failed. Image doesn't exist... --")
-            cmd = "podman pull " + IMAGE_NAME + ":" + IMAGE_VERSION
-            rc = subprocess.call(cmd, shell=True)
-            if rc != 0:
-                print("-- [ERROR] Failed to pull service container image from IBM repository... --")
-                sys.exit(1)
-            else:
-                print("-- [INFO] Service container image has been pulled successfully... --")
-                print("-- [INFO] run ./rclmgr -r to setup the service container... ---")
-                sys.exit(0)
+            rc = install_image_from_repo(input0.force)
+            sys.exit(rc)
         elif (input0.image_file_name is not None):
             print("-- [INFO] Going to install image from local file installation method --")
-            rc = installimage(input0.image_file_name, input0.force)
+            rc = install_image_from_file(input0.image_file_name, input0.force)
             sys.exit(rc)
         else:
             print("-- [ERROR] Image tarball name using -f option or IMAGE_NAME should be inside rclmgr.yml")

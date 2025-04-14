@@ -38,32 +38,40 @@ def parse_arguments():
         help='Show verbose messages in console',
         default=False)
 
+    parser.add_argument(
+        '-f',
+        '--file-name',
+        action='store',
+        dest='filename',
+        help='Restore from local container tar ball. SSSRCL.tar',
+        default=None)
 
     args = parser.parse_args()
 
-    return args.verbose
+    return args.verbose, args.filename
 
 
 def copyLogs():
-    baseVarLogDirExists = os.path.isdir("/var/log/ess")
+    baseVarLogDirExists = os.path.isdir("/var/log/rcl")
     if baseVarLogDirExists:
-        startRCLcontVarLogExists = os.path.isdir("/var/log/ess/startRCLcont")
+        startRCLcontVarLogExists = os.path.isdir("/var/log/rcl/startRCLcont")
         if not startRCLcontVarLogExists:
-            os.mkdir("/var/log/ess/startRCLcont")
+            os.mkdir("/var/log/rcl/startRCLcont")
         logsExists = os.path.isdir("logs")
         if not logsExists:
             os.mkdir("logs")
         for logFile in os.listdir("logs"):
             srcLogFile = "logs/" + logFile
-            dstLogFile = "/var/log/ess/startRCLcont/" + logFile
+            dstLogFile = "/var/log/rcl/startRCLcont/" + logFile
             if os.path.isfile(srcLogFile):
                 shutil.copy(srcLogFile, dstLogFile)
 
 
 def main():
-    verbose = parse_arguments()
+    verbose, filename = parse_arguments()
     our_yml = rclmgr_yml(
         verbose,
+        filename
     )
     # We need to ensure exit before this if clean up
     our_yml.run_log.debug(
@@ -115,7 +123,6 @@ def main():
                 "Could not prepare the container"
             )
             sys.exit(6)
-        
 
 if __name__ == '__main__':
     try:
