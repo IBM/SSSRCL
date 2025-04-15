@@ -96,7 +96,7 @@ class rclmgr_yml(object):
         RC 12 = Failure writing YML file
         RC 13 = Initial file does not have required fields or has wrong values for them
         RC 14 = FREE
-        RC 15 = Tool is not run as rcl user
+        RC 15 = Tool is not run as rcladmin user
         RC 16 = FREE
         RC 17 = FREE
         RC 18 = FREE
@@ -240,7 +240,7 @@ class rclmgr_yml(object):
         # self.__SSR_SQL_check()
 
 
-    def startRCLcont(self):
+    def startRCLContainer(self):
         # Print logs message
         print(
             "\nDetailed logs are located on " +
@@ -1419,7 +1419,7 @@ class rclmgr_yml(object):
                 "Image has been installed succesfully."
             )
         except BaseException:
-            err = sys.exc_info()
+            err = sys.exc_info()[0]
             # We are back on error
             self.run_log.info(
                 "Image installation has failed to install with " +
@@ -1475,7 +1475,7 @@ class rclmgr_yml(object):
             )
             sys.exit(23)
         self.run_log.info(
-            "Going to start the container. On further runs use 'startRCcont' " +
+            "Going to start the container. On further runs use 'startRCLContainer' " +
             "command to manage this container"
         )
 

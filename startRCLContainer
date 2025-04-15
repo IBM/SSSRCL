@@ -54,15 +54,15 @@ def parse_arguments():
 def copyLogs():
     baseVarLogDirExists = os.path.isdir("/var/log/rcl")
     if baseVarLogDirExists:
-        startRCLcontVarLogExists = os.path.isdir("/var/log/rcl/startRCLcont")
+        startRCLcontVarLogExists = os.path.isdir("/var/log/rcl/startRCLContainer")
         if not startRCLcontVarLogExists:
-            os.mkdir("/var/log/rcl/startRCLcont")
+            os.mkdir("/var/log/rcl/startRCLContainer")
         logsExists = os.path.isdir("logs")
         if not logsExists:
             os.mkdir("logs")
         for logFile in os.listdir("logs"):
             srcLogFile = "logs/" + logFile
-            dstLogFile = "/var/log/rcl/startRCLcont/" + logFile
+            dstLogFile = "/var/log/rcl/startRCLContainer/" + logFile
             if os.path.isfile(srcLogFile):
                 shutil.copy(srcLogFile, dstLogFile)
 
@@ -77,7 +77,7 @@ def main():
     our_yml.run_log.debug(
         "Going to invoke input data method from main program"
     )
-    entries_NOK = our_yml.startRCLcont()
+    entries_NOK = our_yml.startRCLContainer()
     if entries_NOK:
         our_yml.run_log.error(
             "The file has been written but does not " +
@@ -115,7 +115,7 @@ def main():
                 our_yml.run_log.info(
                     "They had been some issues on the run, please " +
                     "check the above messages and follow up with " +
-                    "using './startRCLcont'. Thanks"
+                    "using './startRCLContainer'. Thanks"
                 )
                 sys.exit(5)
         else:
