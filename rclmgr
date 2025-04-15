@@ -278,7 +278,7 @@ def run_container(force, is_startrclcont=False):
         cmd += "rm -f ~/container-"+ cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service ; "
         cmd += "systemctl --user enable container-" + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service ; "
         cmd += "loginctl enable-linger rcladmin ; "
-        cmd += "systemctl --user status container-"+ cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service"
+        # cmd += "systemctl --user status container-"+ cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service"
         rc = subprocess.call(cmd, shell=True)
 
         print("-- [INFO] Container created in background. Please check \"systemctl --user start container-" + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service\" to start using container. --")
@@ -313,8 +313,21 @@ def install_image_from_file(image_file_name, force):
 
     cmd = "podman images -nq " + _image_url
     IMAGE_ID = str(subprocess.check_output(cmd, shell=True), 'utf-8').strip()
-    print("-- [INFO] Successfully restored image " + image_file_name + " into local machine with image url " + _image_url + ", image id is " + IMAGE_ID)
+    if IMAGE_ID != "":
+        print("-- [INFO] Successfully restored image " + image_file_name + " into local machine with image url " + _image_url + ", image id is " + IMAGE_ID)
+        rc = 0
+    else:
+        print("--[ERROR] Failed to restore image " + image_file_name + " into local machine with url " + _image_url)
+        rc = 1
 
+    # rc = tag_image(IMAGE_ID)
+    return rc
+
+# -----------------------------------------------------------------------------
+# TAG Image
+# -----------------------------------------------------------------------------
+def tag_image(IMAGE_ID):
+    rc = 0
     if IMAGE_NAME is not None and IMAGE_VERSION is not None:
         print("-- [INFO] Adding TAG name: " + IMAGE_NAME +":" + IMAGE_VERSION + " to image id " + IMAGE_ID + "--")
         cmd = "podman image tag " + IMAGE_NAME + ":" + IMAGE_VERSION + " " + IMAGE_ID
