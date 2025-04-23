@@ -1456,7 +1456,7 @@ class rclmgr_yml(object):
             install=False,
             create_network=False,
             network_name="ess_network",
-            rcont=True
+            run=True
             )
         self.run_log.debug(
             "Going to readconf with rclmgr"
