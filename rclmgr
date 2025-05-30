@@ -157,9 +157,6 @@ def run_container(force, is_startrclcont=False):
     if not is_startrclcont:
         rclmgr_EOL_warning()
 
-    # not needed anymore since we changed the port for http within container
-    # rc += guiAndNftable()
-
     print("-- [INFO] Going to run container image - " + IMAGE_NAME + ":" +
           str(IMAGE_VERSION))
 
@@ -265,6 +262,10 @@ def run_container(force, is_startrclcont=False):
         cmd += " " + IMAGE_NAME + ":" + str(IMAGE_VERSION)
 
         rc = subprocess.call(cmd, shell=True)
+        if rc != 0:
+            print("-- [ERROR] Failed to create container --")
+            print("-- Exiting... --")
+            sys.exit(rc)
 
         print("-- [INFO] Setting RCL Container to start as a systemd service --")
         print("-- [INFO] RCL Container set to autostart --")
@@ -278,6 +279,10 @@ def run_container(force, is_startrclcont=False):
         cmd += "loginctl enable-linger rcladmin ; "
         # cmd += "systemctl --user status container-"+ cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service"
         rc = subprocess.call(cmd, shell=True)
+        if rc != 0:
+            print("-- [ERROR] Failed to setup container into systemd services --")
+            print("-- Exiting... --")
+            sys.exit(rc)
 
         print("-- [INFO] Container created in background. Please check \"systemctl --user start container-" + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service\" to start using container. --")
         print("-- [INFO] Login to container using \"podman exec -it " + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + " /bin/bash\" command --")
@@ -297,6 +302,7 @@ def install_image_from_file(image_file_name, force):
         rc = subprocess.call(cmd, shell=True)
         if rc != 0:
             print("-- [INFO] Removal of the podman image failed. Image doesn't exist... --")
+            rc = 0
 
     # RESTORE CONTAINER IMAGE
     print("-- [INFO] Installing container image " + image_file_name)
@@ -317,36 +323,10 @@ def install_image_from_file(image_file_name, force):
     else:
         print("--[ERROR] Failed to restore image " + image_file_name + " into local machine with url " + _image_url)
         rc = 1
+        sys.exit(1)
 
-    # rc = tag_image(IMAGE_ID)
     return rc
 
-# -----------------------------------------------------------------------------
-# TAG Image
-# -----------------------------------------------------------------------------
-def tag_image(IMAGE_ID):
-    rc = 0
-    if IMAGE_NAME is not None and IMAGE_VERSION is not None:
-        print("-- [INFO] Adding TAG name: " + IMAGE_NAME +":" + IMAGE_VERSION + " to image id " + IMAGE_ID + "--")
-        cmd = "podman image tag " + IMAGE_NAME + ":" + IMAGE_VERSION + " " + IMAGE_ID
-        _rc = subprocess.call(cmd, shell=True)
-        if _rc == 0:
-            print(
-                "-- [INFO] Added tag " +
-                IMAGE_NAME + ":" + IMAGE_VERSION +
-                " to image_id " +
-                IMAGE_ID +
-                " --")
-        else:
-            print(
-                "-- [ERROR] Could not add tag " +
-                IMAGE_VERSION +
-                " to image_id " +
-                IMAGE_ID +
-                " --")
-        rc = _rc
-    ### END of RUN IMAGE ####
-    return rc
 
 # -----------------------------------------------------------------------------
 # Install Image
@@ -356,7 +336,7 @@ def install_image_from_repo(force):
     global IMAGE_VERSION
     rc = 1
 
-    print("-- [INFO] Goint to pull Remoet Code Load Service Container image from IBM repository... --")
+    print("-- [INFO] Goint to pull Remote Code Load Service Container image from IBM repository... --")
     if IMAGE_VERSION == None:
         print("-- [ERROR] Image version should be provided inside rclmgr.yml file... --")
         sys.exit(1)
@@ -368,15 +348,18 @@ def install_image_from_repo(force):
         rc = subprocess.call(cmd, shell=True)
         if rc != 0:
             print("-- [INFO] Removal of the podman image failed. Image doesn't exist... --")
+            rc = 0
 
     cmd = "podman pull " + IMAGE_NAME + ":" + IMAGE_VERSION
     rc = subprocess.call(cmd, shell=True)
     if rc != 0:
         print("-- [ERROR] Failed to pull service container image from IBM repository... --")
+        print("-- [ERROR] Please login to IBM Container Repository using podman login command before starting container --")
+        print("-- Exiting... --")
         rc = 1
+        sys.exit(1)
     else:
         print("-- [INFO] Service container image has been pulled successfully... --")
-        print("-- [INFO] run ./rclmgr -r to setup the service container... ---")
         rc = 0
 
     return rc
@@ -448,27 +431,6 @@ def delete_network(network_name):
         print(
             "-- [ERROR] Network either exist and in use by container or some issue with network creation. --")
         print("-- [ERROR] Please inspect the running container make sure the network is not in use before deletion. --")
-    return rc
-
-
-# -----------------------------------------------------------------------------
-# Defect - 315692 - nftables needs to be restarted and gui stopped before container starts
-# -----------------------------------------------------------------------------
-def guiAndNftable():
-    rc = 0
-    cmd = "systemctl is-active gpfsgui "
-    guiStatus = subprocess.call(cmd, shell=True)
-    if guiStatus == 0:
-        print(
-        "-- [ERROR] gpfsgui service is active, please stop it before starting container --")
-        rc += 1
-        sys.exit(rc)
-
-    cmd = "systemctl restart nftables "
-    rc = subprocess.call(cmd, shell=True)
-    if rc != 0:
-        print(
-            "-- [ERROR] Unable to restart nftables service --")
     return rc
 
 
@@ -575,7 +537,7 @@ def main():
         rc = delete_network(input0.network_name)
         if rc != 0:
             print(" --[INFO] Contunuing to create the network --")
-        rc = create_network(input0.network_name)
+        rc += create_network(input0.network_name)
         sys.exit(rc)
 
 
