@@ -62,7 +62,7 @@ Pre-requisite:
 
     j) Customer should have correct entitlemnt to pull the Remote Code Load Container image from IBM Container Repository.
 
-        $ podman login cp.stg.icr.io --username cp --password <API_Key>
+        $ podman login cp.icr.io --username cp --password <API_Key>
 
 
 # Setting up Remote Code Load Service Container

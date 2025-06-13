@@ -311,7 +311,7 @@ def install_image_from_file(image_file_name, force):
         subprocess.check_output(
             cmd, shell=True), 'utf-8')
 
-    # img_tag=$(echo "Loaded image: cp.stg.icr.io/cp/scalesystem/sss_rcl:6.2.3.0" | grep "Loaded image" | awk -F": " '{print $2}')
+    # img_tag=$(echo "Loaded image: cp.icr.io/cp/scalesystem/sss_rcl:6.2.3.0" | grep "Loaded image" | awk -F": " '{print $2}')
     cmd = "echo \"" + returned_output.rstrip() + "\" | grep \"Loaded image\" | awk -F\": \" '{print $2}'"
     _image_url = str(subprocess.check_output(cmd, shell=True), 'utf-8').strip()
 
