@@ -51,12 +51,19 @@ RAS_IP = "10.23.16.1"
 
 # RCL ENDPOINTS
 RCL_ENDPOINTS = [
-                "xrsc-front-srv-1.southdata.ibm.com",
-                "xrsc-front-srv-2.southdata.ibm.com",
-                "xrsc-front-srv-3.eastdata.ibm.com",
-                "xrsc-front-srv-4.eastdata.ibm.com"
-                ]
+    "xrsc-front-srv-1.southdata.ibm.com",
+    "xrsc-front-srv-2.southdata.ibm.com",
+    "xrsc-front-srv-3.eastdata.ibm.com",
+    "xrsc-front-srv-4.eastdata.ibm.com"
+    ,
+]
 
+RCL_ENDPOINTS = [
+    "170.225.126.11",
+    "170.225.126.12",
+    "170.225.127.11",
+    "170.225.127.12"
+]
 
 STATIC_rclmgr_YML = {
     'CONTAINER_HOSTNAME': 'utilityBareMetal-rcl-official',
@@ -1640,11 +1647,11 @@ class rclmgr_yml(object):
         resolvedEndpoints = 0
         for endpoint_name in RCL_ENDPOINTS:
             try:
-                resolved_ip = socket.gethostbyname(endpoint_name)
+                resolved_ip = socket.gethostbyaddr(endpoint_name)
                 self.run_log.debug(
                     "The endpoint " +
                     endpoint_name +
-                    " resolves to IP address " +
+                    " resolves to address " +
                     resolved_ip
                 )
                 resolvedEndpoints = resolvedEndpoints + 1
@@ -1736,16 +1743,18 @@ class rclmgr_yml(object):
             )
         else:
             self.run_log.error(
-                "Not any of " +
-                str(totalEndpoints) +
-                " IBM Service Portal Fornt server endpoints can be reached on port " +
-                str(portToCheck)
-            )
-            self.run_log.error(
                 "Looks like IBM Utility Host doesn't reach to public network."
             )
             self.run_log.error(
-                "Public network connetivity should be avaiable on IBM Utility Host for Remote Code Load to work (use direct or proxy configuration)."
+                "Public network connetivity should be avaiable on IBM Utility Host " 
+                " for Remote Code Load to work (use direct or proxy configuration)."
+            )
+            self.run_log.error(
+                "Not any of " +
+                str(totalEndpoints) +
+                " IBM Service Portal Fornt server endpoints can be reached on port " +
+                str(portToCheck) + 
+                ", we cannot continue"
             )
             self.run_log.debug(
                 "Going to exist with RC=6"
