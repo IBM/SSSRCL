@@ -51,10 +51,10 @@ RAS_IP = "10.23.16.1"
 
 # RCL ENDPOINTS
 RCL_ENDPOINTS = [
-                "rsc1.tms.stglabs.ibm.com",
-                "rsc2.tms.stglabs.ibm.com",
-                "rsc3.tms.stglabs.ibm.com",
-                "rsctest1.tms.stglabs.ibm.com"
+                "xrsc-front-srv-1.southdata.ibm.com",
+                "xrsc-front-srv-2.southdata.ibm.com",
+                "xrsc-front-srv-3.eastdata.ibm.com",
+                "xrsc-front-srv-4.eastdata.ibm.com"
                 ]
 
 
@@ -1680,7 +1680,7 @@ class rclmgr_yml(object):
             "Going to try to reach the IBM endpoints"
         )
 
-        portToCheck=443
+        portToCheck=22
         reachedEndpoints = 0
         totalEndpoints = len(RCL_ENDPOINTS)
         for endpoint_name in RCL_ENDPOINTS:
@@ -1708,7 +1708,7 @@ class rclmgr_yml(object):
                 )
             # We already checked we can resolve
             except BaseException:
-                self.run_log.error(
+                self.run_log.warning(
                     "Could not reach port " +
                     str(portToCheck) +
                     " at endpoint " +
@@ -1721,17 +1721,36 @@ class rclmgr_yml(object):
                 " endpoints can be reached on port " +
                 str(portToCheck)
             )
-        else:
-            self.run_log.error(
-                "Not all " +
-                str(totalEndpoints) +
+        elif reachedEndpoints > 0 and reachedEndpoints < 4:
+            self.run_log.warning(
+                "Total " +
+                str(reachedEndpoints) +
                 " endpoints can be reached on port " +
                 str(portToCheck)
+            )
+            self.run_log.warning(
+                "Ideally all " + str(totalEndpoints) +
+                " should be reachable for HA purpose on port " +
+                str(portToCheck) + 
+                ". Continuing..."
+            )
+        else:
+            self.run_log.error(
+                "Not any of " +
+                str(totalEndpoints) +
+                " IBM Service Portal Fornt server endpoints can be reached on port " +
+                str(portToCheck)
+            )
+            self.run_log.error(
+                "Looks like IBM Utility Host doesn't reach to public network."
+            )
+            self.run_log.error(
+                "Public network connetivity should be avaiable on IBM Utility Host for Remote Code Load to work (use direct or proxy configuration)."
             )
             self.run_log.debug(
                 "Going to exist with RC=6"
             )
-            # sys.exit(6)
+            sys.exit(6)
 
     def __delete_image(self, img_str_find):
 
