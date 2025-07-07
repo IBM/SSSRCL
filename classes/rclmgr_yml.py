@@ -51,14 +51,6 @@ RAS_IP = "10.23.16.1"
 
 # RCL ENDPOINTS
 RCL_ENDPOINTS = [
-    "xrsc-front-srv-1.southdata.ibm.com",
-    "xrsc-front-srv-2.southdata.ibm.com",
-    "xrsc-front-srv-3.eastdata.ibm.com",
-    "xrsc-front-srv-4.eastdata.ibm.com"
-    ,
-]
-
-RCL_ENDPOINTS = [
     "170.225.126.11",
     "170.225.126.12",
     "170.225.127.11",
@@ -278,9 +270,6 @@ class rclmgr_yml(object):
 
         # Lets check RAS IP is the expected one
         self.__check_RAS_IP()
-
-        # Lets check we can resolve the endpoints
-        self.__resolve_endpoints()
 
         # Lets check we can reach the endpoints
         self.__reach_endpoints()
@@ -1638,49 +1627,6 @@ class rclmgr_yml(object):
                 "Going to exit with RC=7"
             )
             sys.exit(7)
-
-    def __resolve_endpoints(self):
-        self.run_log.debug(
-            "Going to try to name resolve the IBM endpoints"
-        )
-        numberEndpoints = len(RCL_ENDPOINTS)
-        resolvedEndpoints = 0
-        for endpoint_name in RCL_ENDPOINTS:
-            try:
-                resolved_ip = socket.gethostbyaddr(endpoint_name)
-                self.run_log.debug(
-                    "The endpoint " +
-                    endpoint_name +
-                    " resolves to address " +
-                    resolved_ip
-                )
-                resolvedEndpoints = resolvedEndpoints + 1
-            except socket.gaierror:
-                self.run_log.error(
-                    "Could not resolve endpoint " +
-                    endpoint_name
-                )
-            except BaseException:
-                self.run_log.error(
-                    "A generic error happened when tried to resolve " +
-                    endpoint_name
-                )
-        if resolvedEndpoints == numberEndpoints:
-            self.run_log.info(
-                "All " +
-                str(numberEndpoints) +
-                " endpoint DNS names could be resolved"
-            )
-        else:
-            self.run_log.error(
-                "Not all " +
-                str(numberEndpoints) +
-                " endpoint DNS names could be resolved, we cannot continue"
-            )
-            self.run_log.debug(
-                "Going to exit with RC=3"
-            )
-            sys.exit(3)
 
     def __reach_endpoints(self):
         self.run_log.debug(
