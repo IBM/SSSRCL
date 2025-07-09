@@ -358,10 +358,10 @@ class rclmgr_yml(object):
                 IMAGE_VERSION_user = input(
                     "Please type a Image Version : "
                 )
-                if IMAGE_VERSION_user == "6.2.3.0":
+                if IMAGE_VERSION_user == "6.2.3.1":
                     break
                 else:
-                    print("\nImage name should be 6.2.3.0")
+                    print("\nImage name should be 6.2.3.1")
             return IMAGE_VERSION_user
         except KeyboardInterrupt:
             print("")
