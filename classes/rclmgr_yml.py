@@ -72,7 +72,7 @@ CONFIG_rclmgr_YML = {
     'CONTAINER_DOMAIN_NAME': 'gpfs.local',
     'UTILITY_HOSTNAME': 'utilityBareMetal',
     'CAMPUS_INTERFACE_IP': '192.168.100.10',
-    'IMAGE_VERSION': '6.2.3.0'
+    'IMAGE_VERSION': '6.2.3.1'
 }
 
 
@@ -358,10 +358,10 @@ class rclmgr_yml(object):
                 IMAGE_VERSION_user = input(
                     "Please type a Image Version : "
                 )
-                if IMAGE_VERSION_user == "6.2.3.1":
+                if IMAGE_VERSION_user == "6.2.3.0" or IMAGE_VERSION_user == "6.2.3.1":
                     break
                 else:
-                    print("\nImage name should be 6.2.3.1")
+                    print("\nImage name should be 6.2.3.0 or 6.2.3.1")
             return IMAGE_VERSION_user
         except KeyboardInterrupt:
             print("")
@@ -1479,7 +1479,7 @@ class rclmgr_yml(object):
             self.run_log.debug(
                 "Going to run rclmgr runcont"
             )
-            rclmgr.run_container(input0, True)
+            rclmgr.run_container(input0, True, self.IMAGE_VERSION)
         except BaseException:
             # We are back
             self.run_log.error(
