@@ -146,7 +146,7 @@ def clean_nftables():
 # -----------------------------------------------------------------------------
 # Run Container
 # -----------------------------------------------------------------------------
-def run_container(force, is_startrclcont=False, container_version="6.2.3.0"):
+def run_container(force, is_startrclcont=False):
     global UTILITY_HOSTNAME
     global SSH_PORT
     global IMAGE_NAME
@@ -248,7 +248,7 @@ def run_container(force, is_startrclcont=False, container_version="6.2.3.0"):
             " --env \"CONTAINER_HOSTNAME=" + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + "\"" + \
             " --env \"CONTAINER_DOMAIN_NAME=" + cfg["CONTAINER"]["CONTAINER_DOMAIN_NAME"] + "\"" + \
             " --env \"UTILITY_HOST_SERIAL=" + serial.decode('utf-8').strip() + "\"" \
-            " --env \"CONTAINER_VERSION=" + container_version + "\""
+            " --env \"CONTAINER_VERSION=" + IMAGE_VERSION + "\""
 
         if "CONTAINER_NETWORK_NAME" in cfg["CONTAINER"]:
             network = " --net " + \

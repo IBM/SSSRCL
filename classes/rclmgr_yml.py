@@ -1479,7 +1479,7 @@ class rclmgr_yml(object):
             self.run_log.debug(
                 "Going to run rclmgr runcont"
             )
-            rclmgr.run_container(input0, True, self.IMAGE_VERSION)
+            rclmgr.run_container(input0, True)
         except BaseException:
             # We are back
             self.run_log.error(
