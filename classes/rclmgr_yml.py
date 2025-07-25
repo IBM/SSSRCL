@@ -62,7 +62,7 @@ STATIC_rclmgr_YML = {
     'CAMPUS_INTERFACE': 'campus',
     'RAS_INTERFACE': 'virbr1',
     'RAS_INTERFACE_IP': '10.23.16.1',
-    'IMAGE_NAME': 'cp.stg.icr.io/cp/scalesystem/sss_rcl',
+    'IMAGE_NAME': 'cp.icr.io/cp/scalesystem/sss_rcl',
     'SSH_PORT': '10022',
     'LOG': '/home/rcladmin/log',
     'BKUP': '/home/rcladmin/backup'

@@ -33,7 +33,7 @@ CONTAINER:
     # Container image version detail
     # ------------------------------------------------------
     # Image Name
-    IMAGE_NAME: cp.stg.icr.io/cp/scalesystem/sss_rcl
+    IMAGE_NAME: cp.icr.io/cp/scalesystem/sss_rcl
 
     # Image Version
     IMAGE_VERSION: 6.2.3.1
