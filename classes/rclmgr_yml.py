@@ -72,7 +72,7 @@ CONFIG_rclmgr_YML = {
     'CONTAINER_DOMAIN_NAME': 'gpfs.local',
     'UTILITY_HOSTNAME': 'utilityBareMetal',
     'CAMPUS_INTERFACE_IP': '192.168.100.10',
-    'IMAGE_VERSION': '6.2.3.1'
+    'IMAGE_VERSION': '7.0.0.0'
 }
 
 
@@ -358,10 +358,10 @@ class rclmgr_yml(object):
                 IMAGE_VERSION_user = input(
                     "Please type a Image Version : "
                 )
-                if IMAGE_VERSION_user == "6.2.3.0" or IMAGE_VERSION_user == "6.2.3.1" or IMAGE_VERSION_user == "6.2.3.2":
+                if IMAGE_VERSION_user == "6.2.3.0" or IMAGE_VERSION_user == "6.2.3.1" or IMAGE_VERSION_user == "6.2.3.2" or IMAGE_VERSION_user == "7.0.0.0":
                     break
                 else:
-                    print("\nImage name should be 6.2.3.0/ 6.2.3.1/ 6.2.3.2")
+                    print("\nImage name should be 6.2.3.0 or 6.2.3.1 or 6.2.3.2 or 7.0.0.0")
             return IMAGE_VERSION_user
         except KeyboardInterrupt:
             print("")
@@ -1684,7 +1684,7 @@ class rclmgr_yml(object):
             self.run_log.warning(
                 "Ideally all " + str(totalEndpoints) +
                 " should be reachable for HA purpose on port " +
-                str(portToCheck) + 
+                str(portToCheck) +
                 ". Continuing..."
             )
         else:
@@ -1692,14 +1692,14 @@ class rclmgr_yml(object):
                 "Looks like IBM Utility Host doesn't reach to public network."
             )
             self.run_log.error(
-                "Public network connetivity should be avaiable on IBM Utility Host " 
+                "Public network connetivity should be avaiable on IBM Utility Host "
                 " for Remote Code Load to work (use direct or proxy configuration)."
             )
             self.run_log.error(
                 "Not any of " +
                 str(totalEndpoints) +
                 " IBM Service Portal Fornt server endpoints can be reached on port " +
-                str(portToCheck) + 
+                str(portToCheck) +
                 ", we cannot continue"
             )
             self.run_log.debug(
