@@ -154,7 +154,7 @@ CONTAINER:
     IMAGE_NAME: quay.io/sumitkuo_ibm/sss_rcl
 
     # Image Version
-    IMAGE_VERSION: 6.2.3.1
+    IMAGE_VERSION: 6.2.3.2
 
     # ----------------------------------
     # log and backup location. These are the location on the container hosting node.
