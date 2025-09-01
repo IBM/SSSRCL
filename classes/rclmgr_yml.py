@@ -51,19 +51,18 @@ RAS_IP = "10.23.16.1"
 
 # RCL ENDPOINTS
 RCL_ENDPOINTS = [
-                "rsc1.tms.stglabs.ibm.com",
-                "rsc2.tms.stglabs.ibm.com",
-                "rsc3.tms.stglabs.ibm.com",
-                "rsctest1.tms.stglabs.ibm.com"
-                ]
-
+    "170.225.126.11",
+    "170.225.126.12",
+    "170.225.127.11",
+    "170.225.127.12"
+]
 
 STATIC_rclmgr_YML = {
     'CONTAINER_HOSTNAME': 'utilityBareMetal-rcl-official',
     'CAMPUS_INTERFACE': 'campus',
     'RAS_INTERFACE': 'virbr1',
     'RAS_INTERFACE_IP': '10.23.16.1',
-    'IMAGE_NAME': 'cp.icr.io/cp/scalesystem/sss_rcl',
+    'IMAGE_NAME': 'cp.stg.icr.io/cp/scalesystem/sss_rcl',
     'SSH_PORT': '10022',
     'LOG': '/home/rcladmin/log',
     'BKUP': '/home/rcladmin/backup'
@@ -73,7 +72,7 @@ CONFIG_rclmgr_YML = {
     'CONTAINER_DOMAIN_NAME': 'gpfs.local',
     'UTILITY_HOSTNAME': 'utilityBareMetal',
     'CAMPUS_INTERFACE_IP': '192.168.100.10',
-    'IMAGE_VERSION': '6.2.3.2'
+    'IMAGE_VERSION': '7.0.0.0'
 }
 
 
@@ -272,9 +271,6 @@ class rclmgr_yml(object):
         # Lets check RAS IP is the expected one
         self.__check_RAS_IP()
 
-        # Lets check we can resolve the endpoints
-        self.__resolve_endpoints()
-
         # Lets check we can reach the endpoints
         self.__reach_endpoints()
 
@@ -362,10 +358,10 @@ class rclmgr_yml(object):
                 IMAGE_VERSION_user = input(
                     "Please type a Image Version : "
                 )
-                if IMAGE_VERSION_user == "6.2.3.0" or IMAGE_VERSION_user == "6.2.3.1" or IMAGE_VERSION_user == "6.2.3.2":
+                if IMAGE_VERSION_user == "6.2.3.0" or IMAGE_VERSION_user == "6.2.3.1" or IMAGE_VERSION_user == "6.2.3.2" or IMAGE_VERSION_user == "7.0.0.0":
                     break
                 else:
-                    print("\nImage name should be 6.2.3.0 or 6.2.3.1 or 6.2.3.2")
+                    print("\nImage name should be 6.2.3.0 or 6.2.3.1 or 6.2.3.2 or 7.0.0.0")
             return IMAGE_VERSION_user
         except KeyboardInterrupt:
             print("")
@@ -1632,55 +1628,12 @@ class rclmgr_yml(object):
             )
             sys.exit(7)
 
-    def __resolve_endpoints(self):
-        self.run_log.debug(
-            "Going to try to name resolve the IBM endpoints"
-        )
-        numberEndpoints = len(RCL_ENDPOINTS)
-        resolvedEndpoints = 0
-        for endpoint_name in RCL_ENDPOINTS:
-            try:
-                resolved_ip = socket.gethostbyname(endpoint_name)
-                self.run_log.debug(
-                    "The endpoint " +
-                    endpoint_name +
-                    " resolves to IP address " +
-                    resolved_ip
-                )
-                resolvedEndpoints = resolvedEndpoints + 1
-            except socket.gaierror:
-                self.run_log.error(
-                    "Could not resolve endpoint " +
-                    endpoint_name
-                )
-            except BaseException:
-                self.run_log.error(
-                    "A generic error happened when tried to resolve " +
-                    endpoint_name
-                )
-        if resolvedEndpoints == numberEndpoints:
-            self.run_log.info(
-                "All " +
-                str(numberEndpoints) +
-                " endpoint DNS names could be resolved"
-            )
-        else:
-            self.run_log.error(
-                "Not all " +
-                str(numberEndpoints) +
-                " endpoint DNS names could be resolved, we cannot continue"
-            )
-            self.run_log.debug(
-                "Going to exit with RC=3"
-            )
-            sys.exit(3)
-
     def __reach_endpoints(self):
         self.run_log.debug(
             "Going to try to reach the IBM endpoints"
         )
 
-        portToCheck=443
+        portToCheck=22
         reachedEndpoints = 0
         totalEndpoints = len(RCL_ENDPOINTS)
         for endpoint_name in RCL_ENDPOINTS:
@@ -1708,7 +1661,7 @@ class rclmgr_yml(object):
                 )
             # We already checked we can resolve
             except BaseException:
-                self.run_log.error(
+                self.run_log.warning(
                     "Could not reach port " +
                     str(portToCheck) +
                     " at endpoint " +
@@ -1721,17 +1674,38 @@ class rclmgr_yml(object):
                 " endpoints can be reached on port " +
                 str(portToCheck)
             )
-        else:
-            self.run_log.error(
-                "Not all " +
-                str(totalEndpoints) +
+        elif reachedEndpoints > 0 and reachedEndpoints < 4:
+            self.run_log.warning(
+                "Total " +
+                str(reachedEndpoints) +
                 " endpoints can be reached on port " +
                 str(portToCheck)
+            )
+            self.run_log.warning(
+                "Ideally all " + str(totalEndpoints) +
+                " should be reachable for HA purpose on port " +
+                str(portToCheck) +
+                ". Continuing..."
+            )
+        else:
+            self.run_log.error(
+                "Looks like IBM Utility Host doesn't reach to public network."
+            )
+            self.run_log.error(
+                "Public network connetivity should be avaiable on IBM Utility Host "
+                " for Remote Code Load to work (use direct or proxy configuration)."
+            )
+            self.run_log.error(
+                "Not any of " +
+                str(totalEndpoints) +
+                " IBM Service Portal Fornt server endpoints can be reached on port " +
+                str(portToCheck) +
+                ", we cannot continue"
             )
             self.run_log.debug(
                 "Going to exist with RC=6"
             )
-            # sys.exit(6)
+            sys.exit(6)
 
     def __delete_image(self, img_str_find):
 
