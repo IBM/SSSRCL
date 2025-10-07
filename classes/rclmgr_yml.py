@@ -193,27 +193,28 @@ class rclmgr_yml(object):
         # Lets deal with CAMPUS if applicable
         if self.CAMPUS_INTERFACE is None:
             self.CAMPUS_INTERFACE = self.__ask_CAMPUS_INTERFACE()
-            if self.CAMPUS_INTERFACE != "":
-                self.CAMPUS_IPv4 = self.__get_IP_address(
-                    self.CAMPUS_INTERFACE,
-                    "CAMPUS"
-                )
-            elif "CAMPUS_INTERFACE" in self.container:
-                self.CAMPUS_IPv4 = self.__get_IP_address(
-                    self.container['CAMPUS_INTERFACE'],
-                    "CAMPUS"
-                )
+
+        if self.CAMPUS_INTERFACE is not None and self.CAMPUS_INTERFACE != "":
+            self.CAMPUS_IPv4 = self.__get_IP_address(
+                self.CAMPUS_INTERFACE,
+                "CAMPUS"
+            )
+        elif "CAMPUS_INTERFACE" in self.container:
+            self.CAMPUS_IPv4 = self.__get_IP_address(
+                self.container['CAMPUS_INTERFACE'],
+                "CAMPUS"
+            )
+        else:
+            self.CAMPUS_IPv4 = self.container['CAMPUS_INTERFACE_IP']
+
+        if self.CAMPUS_IPv4 is None:
+            campus_interface_exist = self.__check_interface_exists("campus")
+
+            if campus_interface_exist:
+                self.run_log.debug("Campus interface exists.")
             else:
-                self.CAMPUS_IPv4 = self.container['CAMPUS_INTERFACE_IP']
-
-            if self.CAMPUS_IPv4 is None:
-                campus_interface_exist = self.__check_interface_exists("campus")
-
-                if campus_interface_exist:
-                    self.run_log.debug("Campus interface exists.")
-                else:
-                    self.run_log.error("Campus interface does not exist in this system")
-                sys.exit(4)
+                self.run_log.error("Campus interface does not exist in this system")
+            sys.exit(4)
 
         # Lets deal with RAS if applicable
         if "RAS_INTERFACE" in self.container:
