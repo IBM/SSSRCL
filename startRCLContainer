@@ -46,9 +46,25 @@ def parse_arguments():
         help='Restore from local container tar ball. SSSRCL.tar',
         default=None)
 
+    parser.add_argument(
+        '-i',
+        '--campus-interface',
+        action='store',
+        dest='campus_interface',
+        help='Name of the interface connected to campus network. (default: campus)',
+        default=None)
+
+    parser.add_argument(
+        '-vn',
+        '--image-version',
+        action='store',
+        dest='image_version',
+        help='API Server version to be deployed. (default: 7.0.0.0)',
+        default=None)
+
     args = parser.parse_args()
 
-    return args.verbose, args.filename
+    return args.verbose, args.filename, args.campus_interface, args.image_version
 
 
 def copyLogs():
@@ -68,10 +84,12 @@ def copyLogs():
 
 
 def main():
-    verbose, filename = parse_arguments()
+    verbose, filename, campus_interface, image_version = parse_arguments()
     our_yml = rclmgr_yml(
         verbose,
-        filename
+        filename,
+        campus_interface,
+        image_version
     )
     # We need to ensure exit before this if clean up
     our_yml.run_log.debug(
