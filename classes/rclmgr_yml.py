@@ -137,7 +137,9 @@ class rclmgr_yml(object):
     def __init__(
             self,
             verbose,
-            filename
+            filename,
+            campus_interface,
+            image_version
             ):
         self.filename = "rclmgr.yml"
         self.verbose = verbose
@@ -151,6 +153,8 @@ class rclmgr_yml(object):
         self.config_rclmgr_yml = CONFIG_rclmgr_YML
         currentDirectory = os.getcwd()
         self.IMAGE_TARBALL = filename
+        self.CAMPUS_INTERFACE = campus_interface
+        self.IMAGE_VERSION = image_version
 
         self.cfg_loaded, self.cfg = self.__load_yml_file()
         if self.cfg_loaded:
@@ -187,28 +191,29 @@ class rclmgr_yml(object):
             )
 
         # Lets deal with CAMPUS if applicable
-        self.CAMPUS_INTERFACE = self.__ask_CAMPUS_INTERFACE()
-        if self.CAMPUS_INTERFACE != "":
-            self.CAMPUS_IPv4 = self.__get_IP_address(
-                self.CAMPUS_INTERFACE,
-                "CAMPUS"
-            )
-        elif "CAMPUS_INTERFACE" in self.container:
-            self.CAMPUS_IPv4 = self.__get_IP_address(
-                self.container['CAMPUS_INTERFACE'],
-                "CAMPUS"
-            )
-        else:
-            self.CAMPUS_IPv4 = self.container['CAMPUS_INTERFACE_IP']
-
-        if self.CAMPUS_IPv4 is None:
-            campus_interface_exist = self.__check_interface_exists("campus")
-
-            if campus_interface_exist:
-                self.run_log.debug("Campus interface exists.")
+        if self.CAMPUS_INTERFACE is None:
+            self.CAMPUS_INTERFACE = self.__ask_CAMPUS_INTERFACE()
+            if self.CAMPUS_INTERFACE != "":
+                self.CAMPUS_IPv4 = self.__get_IP_address(
+                    self.CAMPUS_INTERFACE,
+                    "CAMPUS"
+                )
+            elif "CAMPUS_INTERFACE" in self.container:
+                self.CAMPUS_IPv4 = self.__get_IP_address(
+                    self.container['CAMPUS_INTERFACE'],
+                    "CAMPUS"
+                )
             else:
-                self.run_log.error("Campus interface does not exist in this system")
-            sys.exit(4)
+                self.CAMPUS_IPv4 = self.container['CAMPUS_INTERFACE_IP']
+
+            if self.CAMPUS_IPv4 is None:
+                campus_interface_exist = self.__check_interface_exists("campus")
+
+                if campus_interface_exist:
+                    self.run_log.debug("Campus interface exists.")
+                else:
+                    self.run_log.error("Campus interface does not exist in this system")
+                sys.exit(4)
 
         # Lets deal with RAS if applicable
         if "RAS_INTERFACE" in self.container:
@@ -229,7 +234,8 @@ class rclmgr_yml(object):
 
         # Lets deal with IMAGE_NAME if applicable
         self.IMAGE_NAME = self.container['IMAGE_NAME']
-        self.IMAGE_VERSION = self.__ask_IMAGE_VERSION()
+        if self.IMAGE_VERSION is None:
+            self.IMAGE_VERSION = self.__ask_IMAGE_VERSION()
 
         self.run_log.debug(
             "We use UTILITY hostname to derivate names for Management. Safe option."
@@ -405,7 +411,7 @@ class rclmgr_yml(object):
         except KeyboardInterrupt:
             print("")
             self.run_log.error(
-                "User cancelled EMS hostname input\n"
+                "User cancelled Image version input\n"
             )
             self.run_log.debug(
                 "Going to terminate with RC 6"
