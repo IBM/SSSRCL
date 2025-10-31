@@ -270,13 +270,15 @@ def run_container(force, is_startrclcont=False):
         print("-- [INFO] Setting RCL Container to start as a systemd service --")
         print("-- [INFO] RCL Container set to autostart --")
 
+        service_file = "container-" + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service"
         cmd = "cd ~; "
         cmd += "podman generate systemd --files --name " + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + "; "
+        cmd += "sed -i '/ExecStart=/i ExecStartPre=/bin/bash -c \"until systemctl --machine=%u@.host is-active network-online.target; do sleep 1; done\"' " + service_file + " ; "
         cmd += "mkdir -p ~/.config/systemd/user; "
-        cmd += "cp -f ~/container-" +  cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service ~/.config/systemd/user/ ; "
-        cmd += "rm -f ~/container-"+ cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service ; "
-        cmd += "systemctl --user enable container-" + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service ; "
-        cmd += "loginctl enable-linger rcladmin ; "
+        cmd += "cp -f ~/" + service_file + " ~/.config/systemd/user/ ; "
+        cmd += "rm -f ~/" + service_file + " ; "
+        cmd += "systemctl --user enable " + service_file + " ; "
+        cmd += "loginctl enable-linger apiadmin ; "
         # cmd += "systemctl --user status container-"+ cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service"
         rc = subprocess.call(cmd, shell=True)
         if rc != 0:
