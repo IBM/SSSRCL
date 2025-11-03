@@ -278,7 +278,7 @@ def run_container(force, is_startrclcont=False):
         cmd += "cp -f ~/" + service_file + " ~/.config/systemd/user/ ; "
         cmd += "rm -f ~/" + service_file + " ; "
         cmd += "systemctl --user enable " + service_file + " ; "
-        cmd += "loginctl enable-linger apiadmin ; "
+        cmd += "loginctl enable-linger rcladmin ; "
         # cmd += "systemctl --user status container-"+ cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service"
         rc = subprocess.call(cmd, shell=True)
         if rc != 0:
