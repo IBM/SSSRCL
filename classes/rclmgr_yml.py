@@ -177,7 +177,7 @@ class rclmgr_yml(object):
                 "The file " +
                 self.filename +
                 " does not have all the required entries or do not " +
-                "match valid values. Please do not modify the file manually."
+                "match valid values. Do not modify the file manually."
             )
             self.run_log.debug(
                 "Going to terminate with RC 13"
@@ -370,7 +370,7 @@ class rclmgr_yml(object):
                     "Going to ask the user for a Campus interface name"
                 )
                 CAMPUS_INTERFACE_user = input(
-                    "Please type a Campus interfae name (campus): "
+                    "Enter the campus interface name (default: campus): "
                 )
                 if CAMPUS_INTERFACE_user == "":
                     CAMPUS_INTERFACE_user = "campus"
@@ -396,7 +396,7 @@ class rclmgr_yml(object):
                     "Going to ask the user for a Image Version"
                 )
                 IMAGE_VERSION_user = input(
-                    "Please type a Image Version (7.0.0.0): "
+                    "Enter the image version (default: 7.0.0.0): "
                 )
                 if IMAGE_VERSION_user == "":
                     IMAGE_VERSION_user = "7.0.0.0"
@@ -827,10 +827,10 @@ class rclmgr_yml(object):
                 # some other exception
                 self.run_log.error(
                     "Some undetermined error when checking current YML " +
-                    "file happened. If available please try to use a " +
+                    "file happened. If available try to use a " +
                     "previous version of rclmgr.yml file from ./logs/. " +
                     "If that is not an option use the manufacturing base " +
-                    "file. And if that is neither fixing this, please " +
+                    "file. And if that is neither fixing this, " +
                     "contact IBM support and attach all the contents of " +
                     "./logs directory into the case"
                 )
@@ -1299,13 +1299,13 @@ class rclmgr_yml(object):
         if self.total_errors == 0:
             config_entries_error = False
             self.run_log.info(
-                "All configurable variables checked passed"
+                "All configurable variables were validated successfully."
             )
         else:
             config_entries_error = True
             self.run_log.error(
                 "Not all entries on the file checks passed. " +
-                "Please review the ERROR message[s] above this one"
+                "Review the ERROR message[s] above this one"
             )
 
         return config_entries_error
@@ -1447,7 +1447,7 @@ class rclmgr_yml(object):
             )
             sys.exit(23)
         self.run_log.info(
-            "Going to install the image. It would do no changes if already installed."
+            "The RCL container image installation is about to begin. No changes are applied if the image is already installed."
         )
         try:
             self.run_log.debug(
@@ -1458,7 +1458,7 @@ class rclmgr_yml(object):
             else:
                 rclmgr.install_image_from_repo(input0.force)
             self.run_log.info(
-                "Image has been installed succesfully."
+                "The container image installation completed successfully."
             )
         except BaseException:
             err = sys.exc_info()[0]
@@ -1517,8 +1517,8 @@ class rclmgr_yml(object):
             )
             sys.exit(23)
         self.run_log.info(
-            "Going to start the container. On further runs use 'startRCLContainer' " +
-            "command to manage this container"
+            "The container is about to start. On later runs, use the 'startRCLContainer' " +
+            "command to manage this container."
         )
 
         try:
@@ -1530,8 +1530,8 @@ class rclmgr_yml(object):
             # We are back
             self.run_log.error(
                 "The container run returned a non zero exit. " +
-                "Please check the messages above. To start the " +
-                "container again use 'startRCcont' again."
+                "Check the messages above. To start the " +
+                "container again use 'startRCLcontainer' again."
             )
             self.run_log.debug(
                 "Going to terminate with RC 24"
@@ -1717,7 +1717,7 @@ class rclmgr_yml(object):
             self.run_log.info(
                 "All " +
                 str(totalEndpoints) +
-                " endpoints can be reached on port " +
+                " endpoints are reachable on port " +
                 str(portToCheck)
             )
         elif reachedEndpoints > 0 and reachedEndpoints < 4:
@@ -1759,7 +1759,7 @@ class rclmgr_yml(object):
 
         if len(images_list) == 0:
             self.run_log.info(
-                "There are no images installed, none to be cleaned up"
+                "No images are installed. No cleanup is required."
             )
             return True
         else:

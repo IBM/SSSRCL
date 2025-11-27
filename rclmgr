@@ -55,7 +55,7 @@ def readconf(input0):
     if "SSH_PORT" in cfg["CONTAINER"]:
         SSH_PORT = str(cfg["CONTAINER"]["SSH_PORT"])
     if SSH_PORT is None:
-        print("-- [ERROR] API Server port should be provided inside apimgr.yml file... --")
+        print("-- [ERROR] RCL Server port should be provided inside rclmgr.yml file... --")
         sys.exit(1)
 
     checkdir()
@@ -157,12 +157,12 @@ def run_container(force, is_startrclcont=False):
     if not is_startrclcont:
         rclmgr_EOL_warning()
 
-    print("-- [INFO] Going to run container image - " + IMAGE_NAME + ":" +
+    print("-- [INFO] Running the container image: " + IMAGE_NAME + ":" +
           str(IMAGE_VERSION))
 
     if force:
         print(
-            "-- [WARNING] Running container with -x or --force option will remove old EXIT state container --")
+            "-- [WARNING] The '-x' or '--force' option removes containers that are in the EXIT state --")
         cmd = "systemctl --user stop container-" +cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + " && "\
             "podman container rm -f " + cfg["CONTAINER"]["CONTAINER_HOSTNAME"]
         subprocess.call(cmd, shell=True)
@@ -209,13 +209,13 @@ def run_container(force, is_startrclcont=False):
             print(
                 "-- [INFO] Container with ACTIVE state found. Trying to attach the existing container --")
 
-        print("-- [INFO] Container resumes/started. Please check \"systemctl --user status container-" + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service\" ")
+        print("-- [INFO] Container resumed/started. Check \"systemctl --user status container-" + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service\" ")
         print("-- [INFO] Re-login to container using \"podman exec -it " + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + " /bin/bash\" command --")
     else:
         # Deleting all Virtual interface related to Management Interface
         # cleanup_virtual_interfaces()
         print("-- [INFO] Automatic initialization of the container begin shortly --")
-        print("-- [INFO] Please be patient as the startup can take a few minutes --")
+        print("-- [INFO] Startup can take several minutes. --")
         time.sleep(3)
 
         clean_nftables()
@@ -268,8 +268,8 @@ def run_container(force, is_startrclcont=False):
             print("-- Exiting... --")
             sys.exit(rc)
 
-        print("-- [INFO] Setting RCL Container to start as a systemd service --")
-        print("-- [INFO] RCL Container set to autostart --")
+        print("-- [INFO] The RCL service container is being configured to start as a systemd service. --")
+        print("-- [INFO] The RCL service container is set to autostart --")
 
         service_file = "container-" + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service"
         cmd = "cd ~; "
@@ -287,8 +287,8 @@ def run_container(force, is_startrclcont=False):
             print("-- Exiting... --")
             sys.exit(rc)
 
-        print("-- [INFO] Container created in background. Please check \"systemctl --user start container-" + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service\" to start using container. --")
-        print("-- [INFO] Login to container using \"podman exec -it " + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + " /bin/bash\" command --")
+        print("-- [INFO] The container was created successfully in the background. To start this container,run the \"systemctl --user start container-" + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service\" command. --")
+        print("-- [INFO] To log in to the container, run the \"podman exec -it " + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + " /bin/bash\" command --")
     return rc
 
 # -----------------------------------------------------------------------------
@@ -339,14 +339,14 @@ def install_image_from_repo(force):
     global IMAGE_VERSION
     rc = 1
 
-    print("-- [INFO] Goint to pull Remote Code Load Service Container image from IBM repository... --")
+    print("-- [INFO] The container image is about to be pulled from the IBM repository. --")
     if IMAGE_VERSION == None:
         print("-- [ERROR] Image version should be provided inside rclmgr.yml file... --")
         sys.exit(1)
 
     cmd = ""
     if force:
-        print("-- [WARNING] Going to forcibly remove the container image " + IMAGE_NAME + ":" + IMAGE_VERSION + "... --")
+        print("-- [WARNING] The existing container image " + IMAGE_NAME + ":" + IMAGE_VERSION + " is being deleted forcefully --")
         cmd = "podman image rm -f " + IMAGE_NAME + ":" + IMAGE_VERSION
         rc = subprocess.call(cmd, shell=True)
         if rc != 0:
@@ -357,12 +357,12 @@ def install_image_from_repo(force):
     rc = subprocess.call(cmd, shell=True)
     if rc != 0:
         print("-- [ERROR] Failed to pull service container image from IBM repository... --")
-        print("-- [ERROR] Please login to IBM Container Repository using podman login command before starting container --")
+        print("-- [ERROR] Login to IBM Container Repository using podman login command before starting container --")
         print("-- Exiting... --")
         rc = 1
         sys.exit(1)
     else:
-        print("-- [INFO] Service container image has been pulled successfully... --")
+        print("-- [INFO] The container image was pulled successfully. --")
         rc = 0
 
     return rc
@@ -379,7 +379,7 @@ def free_space_check():
         print("-- [INFO] Free space check PASSED --")
     else:
         print(
-            "-- [ERROR]:Not enough space in /home - Please fix and re-run installer --")
+            "-- [ERROR] Not enough space in /home - Fix and re-run installer --")
         sys.exit(1)
 
 
@@ -433,7 +433,7 @@ def delete_network(network_name):
             " --")
         print(
             "-- [ERROR] Network either exist and in use by container or some issue with network creation. --")
-        print("-- [ERROR] Please inspect the running container make sure the network is not in use before deletion. --")
+        print("-- [ERROR] Inspect the running container. Verify that the network is not in use before deletion. --")
     return rc
 
 
@@ -490,19 +490,19 @@ def main():
     if allow_rclmgr is None:
         print(
             "-- [WARNING] The tool 'rclmgr' has been deprecated from 6.2.3.0 and newer. " +
-            "Please use 'startRCLcont' instead. --"
+            "Use 'startRCLcontainer' instead. --"
         )
         sys.exit(0)
     elif allow_rclmgr == "1":
         print(
             "-- [WARNING] The tool 'rclmgr' has been deprecated from 6.2.3.0 and newer. " +
             "Proceeding to use rclmgr since you are focing it by export ALLOW_RCLMGR=1. " +
-            "Please avoid using this flag out of an IBM facility. --"
+            "Avoid using this flag out of an IBM facility. --"
         )
     else:
         print(
             "-- [WARNING] The tool 'rclmgr' has been deprecated from 6.2.3.0 and newer. " +
-            "Please use 'startRCLcont' instead. --"
+            "Use 'startRCLcontainer' instead. --"
         )
         sys.exit(0)
 
