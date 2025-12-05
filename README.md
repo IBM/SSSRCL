@@ -66,7 +66,7 @@ Pre-requisite:
 
 
 # Setting up Remote Code Load Service Container
-a)	Make sure rcladmin user and rcladmin group has been already created on utility host. If user is not present, please add user using below command. Login to IBM Utility node using root user and add below user.
+a)	Make sure rcladmin user and rcladmin group has been already created on utility host. If user is not present, add user using below command. Login to IBM Utility node using root user and add below user.
 
     $ useradd rcladmin
     $ passwd rcladmin
@@ -154,7 +154,7 @@ CONTAINER:
     IMAGE_NAME: quay.io/sumitkuo_ibm/sss_rcl
 
     # Image Version
-    IMAGE_VERSION: 6.2.3.0
+    IMAGE_VERSION: 6.2.3.2
 
     # ----------------------------------
     # log and backup location. These are the location on the container hosting node.
@@ -174,11 +174,11 @@ g)	Here is the IBM Service Portal URL should be used to login and see the IBM Ut
         ii.	https://rsc2.tms.stglabs.ibm.com/
         iii.	https://rsc3.tms.stglabs.ibm.com/
 
-    As of now all service containers will be registered at rsc1.tms.stglabs.ibm.com. Let’s login and see. User should have proper access to login to IBM Service Portal. Please consult IBM Service Portal admin to get the user created. IBM Intranet ID should be used to login to IBM Service Portal.
+    As of now all service containers will be registered at rsc1.tms.stglabs.ibm.com. Let’s login and see. User should have proper access to login to IBM Service Portal. Consult IBM Service Portal admin to get the user created. IBM Intranet ID should be used to login to IBM Service Portal.
 
     Now click on “View all connected ESS systems” and it will take use to a page where he can see registered IBM Utility node.
 
-    In case IBM utility node is not listed then please restart service container service again using systemctl command as shown below:
+    In case IBM utility node is not listed then restart service container service again using systemctl command as shown below:
 
     [rcladmin@utility1 ~]$ systemctl --user stop container-utilityBareMetal-rcl-official.service
     [rcladmin@utility1 ~]$ systemctl --user start container-utilityBareMetal-rcl-official.service

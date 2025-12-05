@@ -35,7 +35,7 @@ def parse_arguments():
         '--verbose',
         action='store_true',
         dest='verbose',
-        help='Show verbose messages in console',
+        help='Display verbose messages in the console.',
         default=False)
 
     parser.add_argument(
@@ -43,12 +43,28 @@ def parse_arguments():
         '--file-name',
         action='store',
         dest='filename',
-        help='Restore from local container tar ball. SSSRCL.tar',
+        help='Restore the container from a local tar file. (default: SSSRCL.tar)',
+        default=None)
+
+    parser.add_argument(
+        '-i',
+        '--campus-interface',
+        action='store',
+        dest='campus_interface',
+        help='Name of the interface connected to the campus network. (default: campus)',
+        default=None)
+
+    parser.add_argument(
+        '-vn',
+        '--image-version',
+        action='store',
+        dest='image_version',
+        help='RCL Server version to be deployed. (default: 7.0.0.0)',
         default=None)
 
     args = parser.parse_args()
 
-    return args.verbose, args.filename
+    return args.verbose, args.filename, args.campus_interface, args.image_version
 
 
 def copyLogs():
@@ -68,10 +84,12 @@ def copyLogs():
 
 
 def main():
-    verbose, filename = parse_arguments()
+    verbose, filename, campus_interface, image_version = parse_arguments()
     our_yml = rclmgr_yml(
         verbose,
-        filename
+        filename,
+        campus_interface,
+        image_version
     )
     # We need to ensure exit before this if clean up
     our_yml.run_log.debug(
@@ -105,17 +123,17 @@ def main():
             could_start = our_yml.start_container()
             if could_start:
                 our_yml.run_log.info(
-                    "We are back from the container run. " +
-                    "To start a new container again run " +
-                    ownFile
+                    "To start a new container, run the  " +
+                    ownFile +
+                    " command."
                 )
                 sys.exit(0)
 
             else:
                 our_yml.run_log.info(
-                    "They had been some issues on the run, please " +
+                    "They had been some issues on the run, " +
                     "check the above messages and follow up with " +
-                    "using './startRCLContainer'. Thanks"
+                    "using './startRCLContainer'."
                 )
                 sys.exit(5)
         else:

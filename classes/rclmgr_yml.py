@@ -59,7 +59,6 @@ RCL_ENDPOINTS = [
 
 STATIC_rclmgr_YML = {
     'CONTAINER_HOSTNAME': 'utilityBareMetal-rcl-official',
-    'CAMPUS_INTERFACE': 'campus',
     'RAS_INTERFACE': 'virbr1',
     'RAS_INTERFACE_IP': '10.23.16.1',
     'IMAGE_NAME': 'cp.icr.io/cp/scalesystem/sss_rcl',
@@ -71,8 +70,9 @@ STATIC_rclmgr_YML = {
 CONFIG_rclmgr_YML = {
     'CONTAINER_DOMAIN_NAME': 'gpfs.local',
     'UTILITY_HOSTNAME': 'utilityBareMetal',
+    'CAMPUS_INTERFACE': 'campus',
     'CAMPUS_INTERFACE_IP': '192.168.100.10',
-    'IMAGE_VERSION': '6.2.3.1'
+    'IMAGE_VERSION': '7.0.0.0'
 }
 
 
@@ -137,7 +137,9 @@ class rclmgr_yml(object):
     def __init__(
             self,
             verbose,
-            filename
+            filename,
+            campus_interface,
+            image_version
             ):
         self.filename = "rclmgr.yml"
         self.verbose = verbose
@@ -151,6 +153,8 @@ class rclmgr_yml(object):
         self.config_rclmgr_yml = CONFIG_rclmgr_YML
         currentDirectory = os.getcwd()
         self.IMAGE_TARBALL = filename
+        self.CAMPUS_INTERFACE = campus_interface
+        self.IMAGE_VERSION = image_version
 
         self.cfg_loaded, self.cfg = self.__load_yml_file()
         if self.cfg_loaded:
@@ -173,7 +177,7 @@ class rclmgr_yml(object):
                 "The file " +
                 self.filename +
                 " does not have all the required entries or do not " +
-                "match valid values. Please do not modify the file manually."
+                "match valid values. Do not modify the file manually."
             )
             self.run_log.debug(
                 "Going to terminate with RC 13"
@@ -187,7 +191,15 @@ class rclmgr_yml(object):
             )
 
         # Lets deal with CAMPUS if applicable
-        if "CAMPUS_INTERFACE" in self.container:
+        if self.CAMPUS_INTERFACE is None:
+            self.CAMPUS_INTERFACE = self.__ask_CAMPUS_INTERFACE()
+
+        if self.CAMPUS_INTERFACE is not None and self.CAMPUS_INTERFACE != "":
+            self.CAMPUS_IPv4 = self.__get_IP_address(
+                self.CAMPUS_INTERFACE,
+                "CAMPUS"
+            )
+        elif "CAMPUS_INTERFACE" in self.container:
             self.CAMPUS_IPv4 = self.__get_IP_address(
                 self.container['CAMPUS_INTERFACE'],
                 "CAMPUS"
@@ -223,7 +235,8 @@ class rclmgr_yml(object):
 
         # Lets deal with IMAGE_NAME if applicable
         self.IMAGE_NAME = self.container['IMAGE_NAME']
-        self.IMAGE_VERSION = self.__ask_IMAGE_VERSION()
+        if self.IMAGE_VERSION is None:
+            self.IMAGE_VERSION = self.__ask_IMAGE_VERSION()
 
         self.run_log.debug(
             "We use UTILITY hostname to derivate names for Management. Safe option."
@@ -282,6 +295,7 @@ class rclmgr_yml(object):
         # We need to merge the other config parameters that are not asked
         self.merged_cfg.update({'CONTAINER_DOMAIN_NAME': self.DNS_domain})
         self.merged_cfg.update({'UTILITY_HOSTNAME': self.UTILITY_HOSTNAME})
+        self.merged_cfg.update({'CAMPUS_INTERFACE': self.CAMPUS_INTERFACE})
         self.merged_cfg.update({'CAMPUS_INTERFACE_IP': self.CAMPUS_IPv4})
         self.merged_cfg.update({'IMAGE_VERSION': self.IMAGE_VERSION})
         #self.merged_cfg.update({'RAS_INTERFACE_IP': self.RAS_IPv4})
@@ -348,6 +362,32 @@ class rclmgr_yml(object):
         # Not a big deal yet as check is fast
         return entries_NOK
 
+    def __ask_CAMPUS_INTERFACE(self):
+        # User wants to change campus interface we change or exit if cancel
+        try:
+            while True:
+                self.run_log.debug(
+                    "Going to ask the user for a Campus interface name"
+                )
+                CAMPUS_INTERFACE_user = input(
+                    "Enter the campus interface name (default: campus): "
+                )
+                if CAMPUS_INTERFACE_user == "":
+                    CAMPUS_INTERFACE_user = "campus"
+                    break
+                else:
+                    break
+            return CAMPUS_INTERFACE_user
+        except KeyboardInterrupt:
+            print("")
+            self.run_log.error(
+                "User cancelled Campus interface name input\n"
+            )
+            self.run_log.debug(
+                "Going to terminate with RC 6"
+            )
+            sys.exit(6)
+
     def __ask_IMAGE_VERSION(self):
         # User wants to change hostname we change or exit if cancel
         try:
@@ -356,17 +396,23 @@ class rclmgr_yml(object):
                     "Going to ask the user for a Image Version"
                 )
                 IMAGE_VERSION_user = input(
-                    "Please type a Image Version : "
+                    "Enter the image version (default: 7.0.0.0): "
                 )
-                if IMAGE_VERSION_user == "6.2.3.0" or IMAGE_VERSION_user == "6.2.3.1":
+                if IMAGE_VERSION_user == "":
+                    IMAGE_VERSION_user = "7.0.0.0"
+                    break
+                elif IMAGE_VERSION_user == "6.2.3.0" or \
+                        IMAGE_VERSION_user == "6.2.3.1" or \
+                        IMAGE_VERSION_user == "6.2.3.2" or \
+                        IMAGE_VERSION_user == "7.0.0.0":
                     break
                 else:
-                    print("\nImage name should be 6.2.3.0 or 6.2.3.1")
+                    print("Image name should be 6.2.3.0 or 6.2.3.1 or 6.2.3.2 or 7.0.0.0\n")
             return IMAGE_VERSION_user
         except KeyboardInterrupt:
             print("")
             self.run_log.error(
-                "User cancelled EMS hostname input\n"
+                "User cancelled Image version input\n"
             )
             self.run_log.debug(
                 "Going to terminate with RC 6"
@@ -781,10 +827,10 @@ class rclmgr_yml(object):
                 # some other exception
                 self.run_log.error(
                     "Some undetermined error when checking current YML " +
-                    "file happened. If available please try to use a " +
+                    "file happened. If available try to use a " +
                     "previous version of rclmgr.yml file from ./logs/. " +
                     "If that is not an option use the manufacturing base " +
-                    "file. And if that is neither fixing this, please " +
+                    "file. And if that is neither fixing this, " +
                     "contact IBM support and attach all the contents of " +
                     "./logs directory into the case"
                 )
@@ -1253,13 +1299,13 @@ class rclmgr_yml(object):
         if self.total_errors == 0:
             config_entries_error = False
             self.run_log.info(
-                "All configurable variables checked passed"
+                "All configurable variables were validated successfully."
             )
         else:
             config_entries_error = True
             self.run_log.error(
                 "Not all entries on the file checks passed. " +
-                "Please review the ERROR message[s] above this one"
+                "Review the ERROR message[s] above this one"
             )
 
         return config_entries_error
@@ -1401,7 +1447,7 @@ class rclmgr_yml(object):
             )
             sys.exit(23)
         self.run_log.info(
-            "Going to install the image. It would do no changes if already installed."
+            "The RCL container image installation is about to begin. No changes are applied if the image is already installed."
         )
         try:
             self.run_log.debug(
@@ -1412,7 +1458,7 @@ class rclmgr_yml(object):
             else:
                 rclmgr.install_image_from_repo(input0.force)
             self.run_log.info(
-                "Image has been installed succesfully."
+                "The container image installation completed successfully."
             )
         except BaseException:
             err = sys.exc_info()[0]
@@ -1471,8 +1517,8 @@ class rclmgr_yml(object):
             )
             sys.exit(23)
         self.run_log.info(
-            "Going to start the container. On further runs use 'startRCLContainer' " +
-            "command to manage this container"
+            "The container is about to start. On later runs, use the 'startRCLContainer' " +
+            "command to manage this container."
         )
 
         try:
@@ -1484,8 +1530,8 @@ class rclmgr_yml(object):
             # We are back
             self.run_log.error(
                 "The container run returned a non zero exit. " +
-                "Please check the messages above. To start the " +
-                "container again use 'startRCcont' again."
+                "Check the messages above. To start the " +
+                "container again use 'startRCLcontainer' again."
             )
             self.run_log.debug(
                 "Going to terminate with RC 24"
@@ -1671,7 +1717,7 @@ class rclmgr_yml(object):
             self.run_log.info(
                 "All " +
                 str(totalEndpoints) +
-                " endpoints can be reached on port " +
+                " endpoints are reachable on port " +
                 str(portToCheck)
             )
         elif reachedEndpoints > 0 and reachedEndpoints < 4:
@@ -1684,7 +1730,7 @@ class rclmgr_yml(object):
             self.run_log.warning(
                 "Ideally all " + str(totalEndpoints) +
                 " should be reachable for HA purpose on port " +
-                str(portToCheck) + 
+                str(portToCheck) +
                 ". Continuing..."
             )
         else:
@@ -1692,14 +1738,14 @@ class rclmgr_yml(object):
                 "Looks like IBM Utility Host doesn't reach to public network."
             )
             self.run_log.error(
-                "Public network connetivity should be avaiable on IBM Utility Host " 
+                "Public network connetivity should be avaiable on IBM Utility Host "
                 " for Remote Code Load to work (use direct or proxy configuration)."
             )
             self.run_log.error(
                 "Not any of " +
                 str(totalEndpoints) +
                 " IBM Service Portal Fornt server endpoints can be reached on port " +
-                str(portToCheck) + 
+                str(portToCheck) +
                 ", we cannot continue"
             )
             self.run_log.debug(
@@ -1713,7 +1759,7 @@ class rclmgr_yml(object):
 
         if len(images_list) == 0:
             self.run_log.info(
-                "There are no images installed, none to be cleaned up"
+                "No images are installed. No cleanup is required."
             )
             return True
         else:
