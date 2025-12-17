@@ -143,7 +143,7 @@ class rclmgr_yml(object):
             ):
         self.filename = "rclmgr.yml"
         self.verbose = verbose
-        self.output_dir = "./logs"
+        self.output_dir = "./logs/"
         self.total_errors = 0
         self.merged_cfg = {}
         self.st_time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
