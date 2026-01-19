@@ -59,7 +59,7 @@ def parse_arguments():
         '--image-version',
         action='store',
         dest='image_version',
-        help='RCL Server version to be deployed. (default: 7.0.0.0)',
+        help='RCL Server version to be deployed. (default: 7.0.0.1)',
         default=None)
 
     args = parser.parse_args()
