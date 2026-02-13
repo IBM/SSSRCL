@@ -254,6 +254,8 @@ def run_container(force, is_startrclcont=False):
             network = " --net " + \
                 cfg["CONTAINER"]["CONTAINER_NETWORK_NAME"] + " "
             cmd += network
+        else:
+            cmd += " --net podman"
 
         cmd += container_env_details
         container_ports_details = " -p " + SSH_PORT + ":" + "22" + "/tcp"
