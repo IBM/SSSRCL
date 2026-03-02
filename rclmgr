@@ -273,7 +273,7 @@ def run_container(force, is_startrclcont=False):
         service_file = "container-" + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service"
         cmd = "cd ~; "
         cmd += "podman generate systemd --files --name " + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + "; "
-        cmd += "sed -i '/ExecStart=/i ExecStartPre=/bin/bash -c \"until systemctl --machine=%u@.host is-active network-online.target; do sleep 2; done; until ping -c 2 127.0.0.1; do sleep 2; done\"' " + service_file + " ; "
+        cmd += "sed -i '/ExecStart=/i ExecStartPre=/bin/bash -c \"until systemctl --machine=%u@.host is-active network-online.target; do sleep 2; done; until ping -c 2 127.0.0.1; do sleep 2; done; sleep 5\"' " + service_file + " ; "
         cmd += "mkdir -p ~/.config/systemd/user; "
         cmd += "cp -f ~/" + service_file + " ~/.config/systemd/user/ ; "
         cmd += "rm -f ~/" + service_file + " ; "
