@@ -236,6 +236,8 @@ def run_container(force, is_startrclcont=False):
         cmd = "podman create --syslog" + \
             " --hostname=\"" + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + '.' + cfg["CONTAINER"]["CONTAINER_DOMAIN_NAME"] + "\"" + \
             " --name " + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + \
+            " --user rcladmin" + \
+            " --userns=keep-id" + \
             " -v " + cfg["CONTAINER"]["LOG"] + ":/var/log/" + \
             " -v " + cfg["CONTAINER"]["BKUP"] + ":/home/backup/" + \
             " --cap-add=SYS_CHROOT"
