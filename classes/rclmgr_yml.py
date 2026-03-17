@@ -72,7 +72,7 @@ CONFIG_rclmgr_YML = {
     'UTILITY_HOSTNAME': 'utilityBareMetal',
     'CAMPUS_INTERFACE': 'campus',
     'CAMPUS_INTERFACE_IP': '192.168.100.10',
-    'IMAGE_VERSION': '7.0.0.1'
+    'IMAGE_VERSION': '7.0.0.2'
 }
 
 
@@ -396,19 +396,20 @@ class rclmgr_yml(object):
                     "Going to ask the user for a Image Version"
                 )
                 IMAGE_VERSION_user = input(
-                    "Enter the image version (default: 7.0.0.1): "
+                    "Enter the image version (default: 7.0.0.2): "
                 )
                 if IMAGE_VERSION_user == "":
-                    IMAGE_VERSION_user = "7.0.0.1"
+                    IMAGE_VERSION_user = "7.0.0.2"
                     break
                 elif IMAGE_VERSION_user == "6.2.3.0" or \
                         IMAGE_VERSION_user == "6.2.3.1" or \
                         IMAGE_VERSION_user == "6.2.3.2" or \
                         IMAGE_VERSION_user == "7.0.0.0" or \
-                        IMAGE_VERSION_user == "7.0.0.1" :
+                        IMAGE_VERSION_user == "7.0.0.1" or \
+                        IMAGE_VERSION_user == "7.0.0.2" :
                     break
                 else:
-                    print("Image name should be 6.2.3.0 or 6.2.3.1 or 6.2.3.2 or 7.0.0.0 or 7.0.0.1\n")
+                    print("Image name should be 6.2.3.0 or 6.2.3.1 or 6.2.3.2 or 7.0.0.0 or 7.0.0.1 or 7.0.0.2\n")
             return IMAGE_VERSION_user
         except KeyboardInterrupt:
             print("")
