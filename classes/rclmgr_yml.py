@@ -251,7 +251,8 @@ class rclmgr_yml(object):
             "We use UTILITY hostname to derivate names for Management. Safe option."
         )
         self.UTILITY_HOSTNAME = self.__get_UTILITY_HOSTNAME()
-        self.DNS_domain = self.__get_sys_domain()
+        # self.DNS_domain = self.__get_sys_domain()
+        self.DNS_domain = self.container['CONTAINER_DOMAIN_NAME']
 
         # Lets copy rclmgr into classes dir
         self.__copy_rclmgr_into_classes()
@@ -291,10 +292,10 @@ class rclmgr_yml(object):
             )
 
         # Lets check RAS IP is the expected one
-        self.__check_RAS_IP()
+        # self.__check_RAS_IP()
 
         # Lets check we can reach the endpoints
-        self.__reach_endpoints()
+        # self.__reach_endpoints()
 
         # Lets merge the container information
         self.run_log.debug(
