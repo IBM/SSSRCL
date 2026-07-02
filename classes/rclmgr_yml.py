@@ -72,9 +72,18 @@ CONFIG_rclmgr_YML = {
     'UTILITY_HOSTNAME': 'utilityBareMetal',
     'CAMPUS_INTERFACE': 'campus',
     'CAMPUS_INTERFACE_IP': '192.168.100.10',
-    'IMAGE_VERSION': '7.0.0.2'
+    'IMAGE_VERSION': '7.0.1.0'
 }
 
+SUPPORTED_VERSIONS: set[str] = {
+    # 7.0.x.x
+    "7.0.1.0", "7.0.0.0",
+
+    # 6.2.3.x LTS
+    "6.2.3.5", "6.2.3.4", "6.2.3.3", "6.2.3.2", "6.2.3.1", "6.2.3.0",
+}
+
+DEFAULT_VERSION = "7.0.1.0"
 
 class rclmgr_yml(object):
     """
@@ -242,7 +251,8 @@ class rclmgr_yml(object):
             "We use UTILITY hostname to derivate names for Management. Safe option."
         )
         self.UTILITY_HOSTNAME = self.__get_UTILITY_HOSTNAME()
-        self.DNS_domain = self.__get_sys_domain()
+        # self.DNS_domain = self.__get_sys_domain()
+        self.DNS_domain = self.container['CONTAINER_DOMAIN_NAME']
 
         # Lets copy rclmgr into classes dir
         self.__copy_rclmgr_into_classes()
@@ -282,10 +292,10 @@ class rclmgr_yml(object):
             )
 
         # Lets check RAS IP is the expected one
-        self.__check_RAS_IP()
+        # self.__check_RAS_IP()
 
         # Lets check we can reach the endpoints
-        self.__reach_endpoints()
+        # self.__reach_endpoints()
 
         # Lets merge the container information
         self.run_log.debug(
@@ -395,6 +405,7 @@ class rclmgr_yml(object):
                 self.run_log.debug(
                     "Going to ask the user for a Image Version"
                 )
+<<<<<<< HEAD
                 IMAGE_VERSION_user = input(
                     "Enter the image version (default: 7.0.0.2): "
                 )
@@ -410,6 +421,25 @@ class rclmgr_yml(object):
                     break
                 else:
                     print("Image name should be 6.2.3.0 or 6.2.3.1 or 6.2.3.2 or 7.0.0.0 or 7.0.0.1 or 7.0.0.2\n")
+=======
+                print(
+                    f"\nSupported versions are: "
+                    f"{', '.join(sorted(SUPPORTED_VERSIONS))}"
+                )
+                IMAGE_VERSION_user: str = input(
+                    "Enter the image version (default: " + DEFAULT_VERSION + "): "
+                )
+                if IMAGE_VERSION_user == "":
+                    IMAGE_VERSION_user = DEFAULT_VERSION
+                    break
+                elif IMAGE_VERSION_user in SUPPORTED_VERSIONS:
+                    break
+                else:
+                    print(
+                        f"Supported versions are: "
+                        f"{', '.join(sorted(SUPPORTED_VERSIONS))}\n"
+                    )
+>>>>>>> 02d4777d748b246e9ca6e370b8fc538a51671249
             return IMAGE_VERSION_user
         except KeyboardInterrupt:
             print("")
