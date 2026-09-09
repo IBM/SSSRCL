@@ -4,7 +4,6 @@ import sys
 import os
 import subprocess
 import argparse
-from argparse import RawTextHelpFormatter
 import time
 import datetime
 import yaml
@@ -27,7 +26,6 @@ def readconf(input0):
     SSH_PORT = None
 
     with open(input0.config_file, 'r') as ymlfile:
-        # cfg = yaml.safe_load(ymlfile, Loader=yaml.SafeLoader)
         cfg = yaml.safe_load(ymlfile)
 
     # Utility hostname
@@ -61,7 +59,7 @@ def readconf(input0):
 
 
 # -----------------------------------------------------------------------------
-# Check if required directories exists
+# Check if required directories exist
 # -----------------------------------------------------------------------------
 def checkdir():
     if not (os.path.isdir(cfg["CONTAINER"]["LOG"])):
@@ -73,7 +71,7 @@ def checkdir():
 
 
 # -----------------------------------------------------------------------------
-# Depreciation warning
+# Deprecation warning
 # -----------------------------------------------------------------------------
 def rclmgr_EOL_warning():
     ALLOW_RCLMGR = os.getenv('ALLOW_RCLMGR')
@@ -155,51 +153,40 @@ def run_container(force, is_startrclcont=False):
 
     print(f"-- [INFO] Running the container image: {IMAGE_NAME}:{IMAGE_VERSION}")
 
+    cont = cfg["CONTAINER"]["CONTAINER_HOSTNAME"]
+
     if force:
         print("-- [WARNING] The '-x' or '--force' option removes containers that are in the EXIT state --")
-        cmd = "systemctl --user stop container-" + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + " && " \
-            "podman container rm -f " + cfg["CONTAINER"]["CONTAINER_HOSTNAME"]
+        cmd = f"systemctl --user stop container-{cont} && podman container rm -f {cont}"
         subprocess.call(cmd, shell=True)
 
-    cmd = "podman ps -a --format {{.Names}} --filter name=" + \
-        cfg["CONTAINER"]["CONTAINER_HOSTNAME"]
+    cmd = f"podman ps -a --format {{{{.Names}}}} --filter name={cont}"
     returned_output = subprocess.check_output(cmd, shell=True)
 
     if returned_output != b"":
-        print(f"-- [INFO] Container '{cfg['CONTAINER']['CONTAINER_HOSTNAME']}' already exists --")
-        cmd = "podman ps -a --format {{.Status}} --filter name=" + \
-            cfg["CONTAINER"]["CONTAINER_HOSTNAME"]
+        print(f"-- [INFO] Container '{cont}' already exists --")
+        cmd = f"podman ps -a --format {{{{.Status}}}} --filter name={cont}"
         returned_output = subprocess.check_output(cmd, shell=True)
 
         if b"Exited" in returned_output:
-            # Deleting all Virtual interface related to Management Interface
-            # cleanup_virtual_interfaces()
             print("-- [INFO] Already installed container found on EXIT state. Trying to restart the existing container --")
             print("-- [INFO] It will be the same old container which was exited earlier with all data intact --")
             time.sleep(3)
             clean_nftables()
 
-            cmd = "systemctl --user start container-" + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service "
-            subprocess.call(cmd, shell=True)
+            subprocess.call(f"systemctl --user start container-{cont}.service", shell=True)
         elif b"Created" in returned_output:
-            # Deleting all Virtual interface related to Management Interface
-            # cleanup_virtual_interfaces()
             print("-- [INFO] Already installed container found on CREATED state. Trying to start the existing container --")
             time.sleep(3)
             clean_nftables()
 
-            cmd = "systemctl --user start container-" + cfg["CONTAINER"]["CONTAINER_HOSTNAME"] + ".service "
-            subprocess.call(cmd, shell=True)
+            subprocess.call(f"systemctl --user start container-{cont}.service", shell=True)
         else:
-            print(
-                "-- [INFO] Container with ACTIVE state found. Trying to attach the existing container --")
+            print("-- [INFO] Container with ACTIVE state found. Trying to attach the existing container --")
 
-        cont = cfg["CONTAINER"]["CONTAINER_HOSTNAME"]
         print(f'-- [INFO] Container resumed/started. Check "systemctl --user status container-{cont}.service"')
         print(f'-- [INFO] Re-login to container using "podman exec -it {cont} /bin/bash" command --')
     else:
-        # Deleting all Virtual interface related to Management Interface
-        # cleanup_virtual_interfaces()
         print("-- [INFO] Automatic initialization of the container begin shortly --")
         print("-- [INFO] Startup can take several minutes. --")
         time.sleep(3)
@@ -275,7 +262,7 @@ def run_container(force, is_startrclcont=False):
             print("-- Exiting... --")
             sys.exit(rc)
 
-        print(f'-- [INFO] The container was created successfully in the background. To start this container, run the "systemctl --user start container-{c["CONTAINER_HOSTNAME"]}.service" command. --')
+        print(f'-- [INFO] The container was created successfully in the background. To start this container, run the "systemctl --user start container-{c["CONTAINER_HOSTNAME"]}.service" command --')
         print(f'-- [INFO] To log in to the container, run the "podman exec -it {c["CONTAINER_HOSTNAME"]} /bin/bash" command --')
     return rc
 
@@ -315,7 +302,7 @@ def install_image_from_file(image_file_name, force):
 
 
 # -----------------------------------------------------------------------------
-# Install Image
+# Install image from repository
 # -----------------------------------------------------------------------------
 def install_image_from_repo(force):
     global IMAGE_NAME
@@ -369,8 +356,7 @@ def free_space_check():
 # Check for podman installation
 # -----------------------------------------------------------------------------
 def check_for_podman():
-    print(
-        "-- [INFO] Checking for podman version installed or needs update  on node --")
+    print("-- [INFO] Checking for podman version installed or needs update on node --")
     cmd = "cat /etc/redhat-release"
     returned_output = subprocess.check_output(cmd, shell=True).decode().rstrip()
     if "Red Hat Enterprise Linux release 8.8 (Ootpa)" in returned_output:
@@ -388,8 +374,7 @@ def check_for_podman():
 # Create podman CNI network.
 # -----------------------------------------------------------------------------
 def create_network(network_name):
-    cmd = "podman network create " + network_name
-    rc = subprocess.call(cmd, shell=True)
+    rc = subprocess.call(f"podman network create {network_name}", shell=True)
     if rc != 0:
         print(f"-- [ERROR] Unable to create the podman CNI network {network_name} --")
         print("-- [ERROR] Network either exists or some issue with network creation. --")
@@ -401,8 +386,7 @@ def create_network(network_name):
 # Delete the podman CNI network.
 # -----------------------------------------------------------------------------
 def delete_network(network_name):
-    cmd = "podman network remove " + network_name
-    rc = subprocess.call(cmd, shell=True)
+    rc = subprocess.call(f"podman network remove {network_name}", shell=True)
     if rc != 0:
         print(f"-- [ERROR] Unable to delete the podman CNI network {network_name} --")
         print("-- [ERROR] Network either exists and is in use by a container, or there is some issue with network deletion. --")
@@ -418,7 +402,7 @@ def main():
     global IMAGE_VERSION
 
     parser = argparse.ArgumentParser(
-        epilog='This script run Remote Code Load Service Container image for EMS node.')
+        epilog='This script runs the Remote Code Load service container on an IBM Utility host.')
 
     parser.add_argument('-c', '--config', action='store',
                         default="rclmgr.yml", dest='config_file',
@@ -491,13 +475,12 @@ def main():
     # Running Container
     # -------------------
     if input0.run:
-        # check_for_podman(input0)
         rc = 0
         rc += run_container(input0.force)
         sys.exit(rc)
 
     # -------------------
-    # Create EMS networks
+    # Create network
     # -------------------
     if input0.create_network:
         rc = delete_network(input0.network_name)
