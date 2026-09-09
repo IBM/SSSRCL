@@ -66,7 +66,7 @@ STATIC_rclmgr_YML = {
     'BKUP': '/home/rcladmin/backup'
 }
 
-CONFIG_rclmgr_YML = {
+CONFIG_rclmgr_YML: dict[str, str] = {
     'CONTAINER_DOMAIN_NAME': 'gpfs.local',
     'UTILITY_HOSTNAME': 'utilityBareMetal',
     'CAMPUS_INTERFACE': 'campus',
@@ -165,16 +165,10 @@ class rclmgr_yml(object):
 
         self.cfg_loaded, self.cfg = self.__load_yml_file()
         if self.cfg_loaded:
-            self.run_log.debug(
-                "The YML file was loaded"
-            )
+            self.run_log.debug("The YML file was loaded")
         else:
-            self.run_log.error(
-                "There was an issue loading the rclmgr.yml file"
-            )
-            self.run_log.debug(
-                "Going to terminate with RC 1"
-            )
+            self.run_log.error("There was an issue loading the rclmgr.yml file")
+            self.run_log.debug("Going to terminate with RC 1")
             sys.exit(1)
         self.container = self.cfg['CONTAINER']
         self.static_NOK = self.__check_static_vars()
@@ -237,9 +231,7 @@ class rclmgr_yml(object):
         if self.IMAGE_VERSION is None:
             self.IMAGE_VERSION = self.__ask_IMAGE_VERSION()
 
-        self.run_log.debug(
-            "We use UTILITY hostname to derivate names for Management. Safe option."
-        )
+        self.run_log.debug("We use UTILITY hostname to derivate names for Management. Safe option.")
         self.UTILITY_HOSTNAME = self.__get_UTILITY_HOSTNAME()
         # self.DNS_domain = self.__get_sys_domain()
         self.DNS_domain = self.container['CONTAINER_DOMAIN_NAME']
@@ -271,20 +263,13 @@ class rclmgr_yml(object):
             self.run_log.debug("Going to exit with RC=51")
             sys.exit(51)
         else:
-            self.run_log.debug(
-                "Container name cannot be resolved in this autobridge setup"
-            )
+            self.run_log.debug("Container name cannot be resolved in this autobridge setup")
 
         # Lets check RAS IP is the expected one
         # self.__check_RAS_IP()
 
-        # Lets check we can reach the endpoints
-        # self.__reach_endpoints()
-
         # Lets merge the container information
-        self.run_log.debug(
-            "Going to merge configurable parameters to be written"
-        )
+        self.run_log.debug("Going to merge configurable parameters to be written")
         self.merged_cfg.update(container_hostname)
         # We need to merge the other config parameters that are not asked
         self.merged_cfg.update({'CONTAINER_DOMAIN_NAME': self.DNS_domain})
@@ -296,15 +281,11 @@ class rclmgr_yml(object):
 
         # the static entries. We should readapt the function that does this
         self.merged_cfg.update(self.static_rclmgr_yml)
-        self.run_log.debug(
-            "Merge configurable parameters to be written"
-        )
+        self.run_log.debug("Merge configurable parameters to be written")
         # We can now write the file, update variable with data to be
         # Lets update container with the gathered values
         self.container = self.merged_cfg.copy()
-        self.run_log.debug(
-            "Ready to write data into YML file"
-        )
+        self.run_log.debug("Ready to write data into YML file")
         file_written = self.__write_YML_file()
         if file_written:
             self.run_log.debug(f"YML file {self.filename} has successfully been written")
@@ -314,25 +295,15 @@ class rclmgr_yml(object):
             sys.exit(12)
         # We can now check the file
         # Reload
-        self.run_log.debug(
-            "Going to reload with freshly created file"
-        )
+        self.run_log.debug("Going to reload with freshly created file")
         self.cfg_loaded, self.cfg = self.__load_yml_file()
         if self.cfg_loaded:
-            self.run_log.debug(
-                "The YML file was reloaded"
-            )
+            self.run_log.debug("The YML file was reloaded")
         else:
-            self.run_log.error(
-                "There was an issue loading the rclmgr.yml file"
-            )
-            self.run_log.debug(
-                "Going to terminate with RC 1"
-            )
+            self.run_log.error("There was an issue loading the rclmgr.yml file")
+            self.run_log.debug("Going to terminate with RC 1")
             sys.exit(1)
-        self.run_log.debug(
-            "Going to check reloaded file"
-        )
+        self.run_log.debug("Going to check reloaded file")
         entries_NOK = self.__check_YML_entries()
         if entries_NOK:
             self.run_log.error(
@@ -350,9 +321,7 @@ class rclmgr_yml(object):
         # User wants to change campus interface we change or exit if cancel
         try:
             while True:
-                self.run_log.debug(
-                    "Going to ask the user for a Campus interface name"
-                )
+                self.run_log.debug("Going to ask the user for a Campus interface name")
                 CAMPUS_INTERFACE_user = input(
                     "Enter the campus interface name (default: campus): "
                 )
@@ -364,21 +333,15 @@ class rclmgr_yml(object):
             return CAMPUS_INTERFACE_user
         except KeyboardInterrupt:
             print("")
-            self.run_log.error(
-                "User cancelled Campus interface name input\n"
-            )
-            self.run_log.debug(
-                "Going to terminate with RC 6"
-            )
+            self.run_log.error("User cancelled Campus interface name input\n")
+            self.run_log.debug("Going to terminate with RC 6")
             sys.exit(6)
 
     def __ask_IMAGE_VERSION(self):
         # User wants to change hostname we change or exit if cancel
         try:
             while True:
-                self.run_log.debug(
-                    "Going to ask the user for a Image Version"
-                )
+                self.run_log.debug("Going to ask the user for a Image Version")
                 print(
                     f"\nSupported versions are: "
                     f"{', '.join(sorted(SUPPORTED_VERSIONS))}"
@@ -399,12 +362,8 @@ class rclmgr_yml(object):
             return IMAGE_VERSION_user
         except KeyboardInterrupt:
             print("")
-            self.run_log.error(
-                "User cancelled Image version input\n"
-            )
-            self.run_log.debug(
-                "Going to terminate with RC 6"
-            )
+            self.run_log.error("User cancelled Image version input\n")
+            self.run_log.debug("Going to terminate with RC 6")
             sys.exit(6)
 
     def __write_YML_file(self):
@@ -424,7 +383,6 @@ class rclmgr_yml(object):
             self.run_log.error(f"Cannot write information into YML file {self.filename}")
             self.run_log.debug("Going to terminate with RC 12")
             sys.exit(12)
-
 
     def __checkContNotResolvable(self, containerShort):
         containerLong = f"{containerShort}.{self.DNS_domain}"
@@ -466,13 +424,11 @@ class rclmgr_yml(object):
             self.run_log.debug(f"The container long name {containerLong} does not resolve any IP address")
         return canResolve
 
-
     def __get_UTILITY_HOSTNAME(self):
         self.run_log.debug("Going to query UTILITY hostname")
         UTILITY_HOSTNAME = "utilityBareMetal"
         self.run_log.debug(f"The UTILITY hostname is {UTILITY_HOSTNAME}")
         return UTILITY_HOSTNAME
-
 
     def __get_sys_domain(self):
         # Lets get the domain or fail RC 8 if none
@@ -487,7 +443,6 @@ class rclmgr_yml(object):
             sys.exit(8)
         return str(DNS_domain)
 
-
     def __create_output_dir(self):
         # Lets create the output dir
         if not os.path.isdir(self.output_dir):
@@ -500,29 +455,17 @@ class rclmgr_yml(object):
 
     def __copy_rclmgr_into_classes(self):
         if not os.path.isfile("classes/rclmgr.py"):
-            self.run_log.debug(
-                "rclmgr.py does not exist inside classes directory"
-            )
-            self.run_log.debug(
-                "Going to copy rclmgr inside classes directory as rclmgr.py"
-            )
+            self.run_log.debug("rclmgr.py does not exist inside classes directory")
+            self.run_log.debug("Going to copy rclmgr inside classes directory as rclmgr.py")
             try:
                 shutil.copyfile("rclmgr", "classes/rclmgr.py")
-                self.run_log.debug(
-                    "rclmgr is copied inside classes directory as rclmgr.py"
-                )
+                self.run_log.debug("rclmgr is copied inside classes directory as rclmgr.py")
             except BaseException:
-                self.run_log.error(
-                    "Cannot copy rclmgr into classes directory"
-                )
-                self.run_log.debug(
-                    "Going to terminate with RC 21"
-                )
+                self.run_log.error("Cannot copy rclmgr into classes directory")
+                self.run_log.debug("Going to terminate with RC 21")
                 sys.exit(21)
         else:
-            self.run_log.debug(
-                "rclmgr.py does already exist inside classes directory"
-            )
+            self.run_log.debug("rclmgr.py does already exist inside classes directory")
 
     def __start_logger(self):
         self.__create_output_dir()
@@ -633,7 +576,7 @@ class rclmgr_yml(object):
             except BaseException:
                 self.run_log.error(
                     "Some undetermined error when checking current YML file happened. "
-                    "If available try to use a previous version of rclmgr.yml file from ./logs/. "
+                    "If available, try to use a previous version of rclmgr.yml file from ./logs/. "
                     "If that is not an option use the manufacturing base file. "
                     "And if that is neither fixing this, contact IBM support and attach "
                     "all the contents of ./logs directory into the case"
@@ -651,7 +594,7 @@ class rclmgr_yml(object):
             )
         else:
             self.run_log.debug(
-                "Static entries passed the test. " +
+                "Static entries passed the test. "
                 "Merging them into the config to write"
             )
             self.merged_cfg.update(self.static_rclmgr_yml)
@@ -881,44 +824,26 @@ class rclmgr_yml(object):
         # Every start we check that not running already, if not running we delete the image
         contIsUp = self.__alreadyUP("rcl-official")
         if contIsUp:
-            self.run_log.error(
-                "We cannot start the RCL container as seems that is already UP."
-            )
-            self.run_log.debug(
-                "Going to exit with RC=9"
-            )
+            self.run_log.error("We cannot start the RCL container as seems that is already UP.")
+            self.run_log.debug("Going to exit with RC=9")
             sys.exit(9)
         else:
-            self.run_log.debug(
-                "Container is not UP, we will delete the image before start."
-            )
+            self.run_log.debug("Container is not UP, we will delete the image before start.")
             imgDeleted = self.__delete_image("rcl-official")
             if imgDeleted:
-                self.run_log.debug(
-                    "RCL image has been deleted, we continue."
-                )
+                self.run_log.debug("RCL image has been deleted, we continue.")
             else:
-                self.run_log.error(
-                    "Could not delete container image."
-                )
-                self.run_log.debug(
-                    "Going to exit with RC=10"
-                )
+                self.run_log.error("Could not delete container image.")
+                self.run_log.debug("Going to exit with RC=10")
                 sys.exit(10)
         # Users wants that we prep the container
         # This requires rclmgr -i, rclmgr -n
-        self.run_log.debug(
-            "Starting check if rclmgr exists"
-        )
+        self.run_log.debug("Starting check if rclmgr exists")
         file_exists = os.path.isfile("rclmgr")
         if file_exists:
-            self.run_log.debug(
-                "Completed check for rclmgr and exists"
-            )
+            self.run_log.debug("Completed check for rclmgr and exists")
         else:
-            self.run_log.debug(
-                "Completed check for rclmgr and does not exist"
-            )
+            self.run_log.debug("Completed check for rclmgr and does not exist")
             return False
 
         # Lets install the image, it might be there already
@@ -935,20 +860,12 @@ class rclmgr_yml(object):
 
         # Lets use rclmgr install tools
         try:
-            self.run_log.debug(
-                "Going to import rclmgr"
-            )
+            self.run_log.debug("Going to import rclmgr")
             import classes.rclmgr as rclmgr
-            self.run_log.debug(
-                "Imported rclmgr"
-            )
+            self.run_log.debug("Imported rclmgr")
         except ImportError:
-            self.run_log.error(
-                "Cannot import rclmgr"
-            )
-            self.run_log.debug(
-                "Going to terminate with RC 22"
-            )
+            self.run_log.error("Cannot import rclmgr")
+            self.run_log.debug("Going to terminate with RC 22")
             sys.exit(22)
         # We have rclmgr loaded now
         input0 = argparse.Namespace(
@@ -959,36 +876,24 @@ class rclmgr_yml(object):
             create_network=False,
             network_name="ess_network",
             run=False)
-        self.run_log.debug(
-            "Going to readconf with rclmgr"
-        )
+        self.run_log.debug("Going to readconf with rclmgr")
         try:
             rclmgr.readconf(input0)
-            self.run_log.debug(
-                "Success readconf with rclmgr"
-            )
+            self.run_log.debug("Success readconf with rclmgr")
         except BaseException:
-            self.run_log.error(
-                "Could not readconf with rclmgr"
-            )
-            self.run_log.debug(
-                "Going to terminate with RC 23"
-            )
+            self.run_log.error("Could not readconf with rclmgr")
+            self.run_log.debug("Going to terminate with RC 23")
             sys.exit(23)
         self.run_log.info(
             "The RCL container image installation is about to begin. No changes are applied if the image is already installed."
         )
         try:
-            self.run_log.debug(
-                "Going to run rclmgr installimage"
-            )
+            self.run_log.debug("Going to run rclmgr installimage")
             if input0.image_file_name is not None:
                 rclmgr.install_image_from_file(input0.image_file_name, input0.force)
             else:
                 rclmgr.install_image_from_repo(input0.force)
-            self.run_log.info(
-                "The container image installation completed successfully."
-            )
+            self.run_log.info("The container image installation completed successfully.")
         except BaseException:
             err = sys.exc_info()[0]
             self.run_log.error(f"Image installation has failed with {err}")
@@ -1017,9 +922,7 @@ class rclmgr_yml(object):
             network_name="ess_network",
             run=True
             )
-        self.run_log.debug(
-            "Going to readconf with rclmgr"
-        )
+        self.run_log.debug("Going to readconf with rclmgr")
         try:
             rclmgr.readconf(input0)
             self.run_log.debug("Success readconf with rclmgr")
@@ -1029,13 +932,11 @@ class rclmgr_yml(object):
             sys.exit(23)
         self.run_log.info(
             "The container is about to start. On later runs, use the 'startRCLContainer' "
-            "command to manage this container."
+            "command with optional arguments to manage the container."
         )
 
         try:
-            self.run_log.debug(
-                "Going to run rclmgr runcont"
-            )
+            self.run_log.debug("Going to run rclmgr runcont")
             rclmgr.run_container(input0, True)
         except BaseException:
             self.run_log.error(
@@ -1045,9 +946,7 @@ class rclmgr_yml(object):
             )
             self.run_log.debug("Going to terminate with RC 24")
             sys.exit(24)
-        self.run_log.debug(
-            "We are back from rclmgr runcont normal mode"
-        )
+        self.run_log.debug("We are back from rclmgr runcont normal mode")
         return True
 
     def __podman_bin_exists(self):
@@ -1110,41 +1009,6 @@ class rclmgr_yml(object):
             self.run_log.error(f"Configured RAS IP {self.RAS_IPv4} does not belong to RAS netblock {RAS_NETBLOCK}")
             self.run_log.debug("Going to exit with RC=7")
             sys.exit(7)
-
-    def __reach_endpoints(self):
-        self.run_log.debug("Going to try to reach the IBM endpoints")
-        port_to_check = 22
-        reached_endpoints = 0
-        total_endpoints = len(RCL_ENDPOINTS)
-        for endpoint_name in RCL_ENDPOINTS:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(3)
-            try:
-                sock.connect((endpoint_name, port_to_check))
-                self.run_log.debug(f"Connected to port {port_to_check} at endpoint {endpoint_name}")
-                reached_endpoints += 1
-                sock.close()
-            except BaseException:
-                self.run_log.warning(f"Could not reach port {port_to_check} at endpoint {endpoint_name}")
-        if reached_endpoints == total_endpoints:
-            self.run_log.info(f"All {total_endpoints} endpoints are reachable on port {port_to_check}")
-        elif reached_endpoints > 0:
-            self.run_log.warning(f"Total {reached_endpoints} endpoints can be reached on port {port_to_check}")
-            self.run_log.warning(
-                f"Ideally all {total_endpoints} should be reachable for HA purpose on port {port_to_check}. Continuing..."
-            )
-        else:
-            self.run_log.error("Looks like IBM Utility Host cannot reach the public network.")
-            self.run_log.error(
-                "Public network connectivity should be available on IBM Utility Host "
-                "for Remote Code Load to work (use direct or proxy configuration)."
-            )
-            self.run_log.error(
-                f"None of {total_endpoints} IBM Service Portal Front server endpoints "
-                f"can be reached on port {port_to_check}, we cannot continue"
-            )
-            self.run_log.debug("Going to exit with RC=6")
-            sys.exit(6)
 
     def __delete_image(self, img_str_find):
         images_list = self.__get_installed_containers()
@@ -1209,30 +1073,37 @@ class rclmgr_yml(object):
             stderr=subprocess.STDOUT
         ).strip().decode()
         self.run_log.debug("Got back from querying containers with podman ps command")
+        self.run_log.debug("Going to load containers JSON output into list")
         try:
             container_list = json.loads(containers_json_output)
             self.run_log.debug("Imported into a list the output from podman ps command")
         except BaseException:
-            self.run_log.debug("Load of containers JSON returned an exception, we consider no containers installed")
+            self.run_log.debug(
+                "Load of containers JSON returned an exception, "
+                "we consider no containers installed"
+            )
             container_list = []
         return container_list
 
     def __alreadyUP(self, img_str_find):
-        self.run_log.debug("Checking if container is already UP")
+        self.run_log.debug("Method to reconnect to POD is called")
         installedPODs = self.__get_installed_containers()
+        # We might have more than one installed at this point
         isUP = False
         for pod in installedPODs:
             if pod['State'] == 3 or pod['State'] == "running":
                 imageContUp = pod['Image']
                 imageContUpID = pod['ID'] if pod['State'] == 3 else pod['Id']
                 self.run_log.debug(
-                    f"Found a POD with state=UP and image {imageContUp} and ID {imageContUpID}"
+                    f"Found a POD with state = 3 (UP) and image {imageContUp} and ID {imageContUpID}"
                 )
                 if img_str_find in pod['Image']:
-                    self.run_log.debug("Found the POD image we are looking for in UP state.")
+                    self.run_log.debug("Found the POD image we are looking for in UP.")
                     isUP = True
                 else:
-                    self.run_log.debug("Although the POD image is UP, it is not the one we are looking for.")
+                    self.run_log.debug("Although the POD image is UP, is not the one we are looking for.")
             else:
-                self.run_log.debug(f"Found installed container in non-UP state and image {pod['Image']}")
+                self.run_log.debug(
+                    f"Found installed container on other state than 3 (UP) and image {pod['Image']}"
+                )
         return isUP
