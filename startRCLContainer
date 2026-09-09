@@ -29,7 +29,6 @@ ownFile = __file__
 def parse_arguments():
     parser = argparse.ArgumentParser()
 
-
     parser.add_argument(
         '-v',
         '--verbose',
@@ -68,19 +67,17 @@ def parse_arguments():
 
 
 def copyLogs():
-    baseVarLogDirExists = os.path.isdir("/var/log/rcl")
-    if baseVarLogDirExists:
-        startRCLcontVarLogExists = os.path.isdir("/var/log/rcl/startRCLContainer")
-        if not startRCLcontVarLogExists:
-            os.mkdir("/var/log/rcl/startRCLContainer")
-        logsExists = os.path.isdir("logs")
-        if not logsExists:
-            os.mkdir("logs")
-        for logFile in os.listdir("logs"):
-            srcLogFile = "logs/" + logFile
-            dstLogFile = "/var/log/rcl/startRCLContainer/" + logFile
-            if os.path.isfile(srcLogFile):
-                shutil.copy(srcLogFile, dstLogFile)
+    if not os.path.isdir("/var/log/rcl"):
+        return
+    dst_dir = "/var/log/rcl/startRCLContainer"
+    if not os.path.isdir(dst_dir):
+        os.mkdir(dst_dir)
+    if not os.path.isdir("logs"):
+        os.mkdir("logs")
+    for logFile in os.listdir("logs"):
+        src = os.path.join("logs", logFile)
+        if os.path.isfile(src):
+            shutil.copy(src, os.path.join(dst_dir, logFile))
 
 
 def main():
@@ -92,59 +89,41 @@ def main():
         image_version
     )
     # We need to ensure exit before this if clean up
-    our_yml.run_log.debug(
-        "Going to invoke input data method from main program"
-    )
+    our_yml.run_log.debug("Going to invoke input data method from main program")
     entries_NOK = our_yml.startRCLContainer()
     if entries_NOK:
         our_yml.run_log.error(
-            "The file has been written but does not " +
-            "pass the checks. You CANNOT continue with the next steps. " +
-            "Check the ERROR messages above to " +
-            "understand which tests failed and fix them. " +
-            "You can run this tool again, the data you entered will " +
-            "be shown as default entries."
+            "The file has been written but does not pass the checks. "
+            "You CANNOT continue with the next steps. "
+            "Check the ERROR messages above to understand which tests failed and fix them. "
+            "You can run this tool again, the data you entered will be shown as default entries."
         )
         sys.exit(1)
     else:
-        our_yml.run_log.debug(
-            "Could generate the needed information into YML, " +
-            "going to start the RCL container"
-        )
-        our_yml.run_log.debug(
-            "Going to prepare the container"
-        )
+        our_yml.run_log.debug("Could generate the needed information into YML, going to start the RCL container")
+        our_yml.run_log.debug("Going to prepare the container")
         canPrep = our_yml.prep_container()
-        our_yml.run_log.debug(
-            "back from prepare the container"
-        )
+        our_yml.run_log.debug("Back from prepare the container")
         if canPrep:
-
             could_start = our_yml.start_container()
             if could_start:
-                our_yml.run_log.info(
-                    "To start a new container, run the  " +
-                    ownFile +
-                    " command."
-                )
+                our_yml.run_log.info(f"To start a new container, run the {ownFile} command.")
                 sys.exit(0)
-
             else:
-                our_yml.run_log.info(
-                    "They had been some issues on the run, " +
-                    "check the above messages and follow up with " +
-                    "using './startRCLContainer'."
+                our_yml.run_log.error(
+                    "There have been some issues on the run. "
+                    "Check the above messages and follow up with './startRCLContainer'."
                 )
                 sys.exit(5)
         else:
-            our_yml.run_log.error(
-                "Could not prepare the container"
-            )
+            our_yml.run_log.error("Could not prepare the container")
             sys.exit(6)
 
 if __name__ == '__main__':
     try:
         main()
-        copyLogs()
+    except KeyboardInterrupt:
+        print("\nInterrupted by user.")
+        sys.exit(1)
     finally:
         copyLogs()
