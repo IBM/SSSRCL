@@ -39,10 +39,10 @@ CONTAINER:
     # Container image version detail
     # ------------------------------------------------------
     # Image Name
-    IMAGE_NAME: cp.stg.icr.io/cp/scalesystem/sss_rcl
+    IMAGE_NAME: preprod.icr.io/cp/scalesystem/sss_rcl
 
     # Image Version
-    IMAGE_VERSION: 7.0.1.0
+    IMAGE_VERSION: 7.0.2.0
 
     # ----------------------------------
     # log and backup location. These are the location on the container hosting node.
