@@ -147,7 +147,8 @@ class rclmgr_yml(object):
             verbose,
             filename,
             campus_interface,
-            image_version
+            image_version,
+            delete=False
             ):
         self.filename = "rclmgr.yml"
         self.verbose = verbose
@@ -182,6 +183,9 @@ class rclmgr_yml(object):
             sys.exit(13)
         else:
             self.run_log.debug(f"The file {self.filename} does have all the required entries.")
+
+        if delete:
+            return
 
         # Lets deal with CAMPUS if applicable
         if self.CAMPUS_INTERFACE is None:

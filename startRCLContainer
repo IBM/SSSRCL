@@ -110,7 +110,8 @@ def main():
         verbose,
         filename,
         campus_interface,
-        image_version
+        image_version,
+        delete
     )
 
     if delete:
