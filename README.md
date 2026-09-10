@@ -24,13 +24,18 @@ This is the **only script you need to run**. It auto-detects system settings, wr
 ./startRCLContainer [options]
 
 Options:
+  -d, --delete                   Delete the RCL service container and its systemd service unit.
   -v, --verbose                  Display verbose messages in the console.
-  -f, --file-name FILE           Restore the container from a local tar file.
+
+  Install source (mutually exclusive):
+  -f,  --file-name FILE          Restore the container from a local tar file.
                                  (default: SSSRCL.tar)
-  -i, --campus-interface IF      Name of the interface connected to the campus
-                                 network. (default: campus)
   -vn, --image-version VER       RCL container image version to deploy.
                                  (default: 7.0.2.0)
+
+  Options (start only, not valid with -d/--delete):
+  -i,  --campus-interface IF     Name of the interface connected to the campus
+                                 network. (default: campus)
 ```
 
 ### Examples
@@ -42,14 +47,17 @@ Options:
 # Start from a local tarball
 ./startRCLContainer -f SSSRCL.tar
 
-# Override the campus interface
-./startRCLContainer -i eth0
-
 # Override the image version
 ./startRCLContainer -vn 7.0.1.1
 
+# Override the campus interface
+./startRCLContainer -vn 7.0.2.0 -i eth0
+
 # Verbose output
 ./startRCLContainer -v
+
+# Delete the container
+./startRCLContainer -d
 ```
 
 ---
