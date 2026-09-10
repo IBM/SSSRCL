@@ -395,6 +395,43 @@ def delete_network(network_name):
 
 
 # -----------------------------------------------------------------------------
+# delete_container
+# Stop and remove the container and its systemd service unit.
+# -----------------------------------------------------------------------------
+def delete_container():
+    cont = cfg["CONTAINER"]["CONTAINER_HOSTNAME"]
+    admin_user = "rcladmin"
+
+    print(f"-- [INFO] Deleting container '{cont}' and its systemd service --")
+
+    # Stop the service (best-effort — may already be stopped or never loaded)
+    subprocess.call(f"systemctl --user stop container-{cont}.service", shell=True)
+
+    # Force-remove the container from podman
+    rc = subprocess.call(f"podman container rm -f {cont}", shell=True)
+    if rc != 0:
+        print(f"-- [WARNING] podman container rm -f {cont} failed (rc={rc}) — "
+              f"container may not exist --")
+
+    # Remove the generated service file and reload the daemon
+    service_path = os.path.join(
+        os.path.expanduser(f"~{admin_user}"), ".config", "systemd", "user",
+        f"container-{cont}.service")
+    if os.path.exists(service_path):
+        try:
+            os.remove(service_path)
+            print(f"-- [INFO] Service file removed: {service_path} --")
+        except OSError as exc:
+            print(f"-- [ERROR] Could not remove {service_path}: {exc} --")
+    else:
+        print(f"-- [INFO] Service file not found (already removed?): {service_path} --")
+
+    subprocess.call("systemctl --user daemon-reload", shell=True)
+    print(f"-- [INFO] Container '{cont}' deleted. --")
+    return rc
+
+
+# -----------------------------------------------------------------------------
 # main
 # -----------------------------------------------------------------------------
 def main():
@@ -440,6 +477,11 @@ def main():
                               required=False,
                               help='Runs Remote Code Load Service Container.')
 
+    mutual_group.add_argument('-d', '--delete', action='store_true',
+                              default=False, dest='delete',
+                              required=False,
+                              help='Delete the RCL service container and its systemd service unit.')
+
     input0 = parser.parse_args()
     readconf(input0)
 
@@ -477,6 +519,13 @@ def main():
     if input0.run:
         rc = 0
         rc += run_container(input0.force)
+        sys.exit(rc)
+
+    # -------------------
+    # Delete Container
+    # -------------------
+    if input0.delete:
+        rc = delete_container()
         sys.exit(rc)
 
     # -------------------

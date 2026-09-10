@@ -107,7 +107,7 @@ podman login cp.icr.io --username cp --password <API_Key>
 The RCL image is pulled from:
 
 ```
-preprod.icr.io/cp/scalesystem/sss_rcl
+preprod.icr.io/cp/scale-devops/scalesystem/sss_rcl
 ```
 
 ---
@@ -131,7 +131,7 @@ CONTAINER:
 
     SSH_PORT: 10022                    # IBM Service Portal SSH port
 
-    IMAGE_NAME: preprod.icr.io/cp/scalesystem/sss_rcl
+    IMAGE_NAME: preprod.icr.io/cp/scale-devops/scalesystem/sss_rcl
     IMAGE_VERSION: 7.0.2.0
 
     LOG:  /home/rcladmin/log

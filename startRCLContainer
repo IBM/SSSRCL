@@ -30,6 +30,14 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
+        '-d',
+        '--delete',
+        action='store_true',
+        dest='delete',
+        help='Delete the RCL service container and its systemd service unit.',
+        default=False)
+
+    parser.add_argument(
         '-v',
         '--verbose',
         action='store_true',
@@ -37,12 +45,25 @@ def parse_arguments():
         help='Display verbose messages in the console.',
         default=False)
 
-    parser.add_argument(
+    # Install source: mutually exclusive — local tar file vs repo version
+    install_source = parser.add_mutually_exclusive_group()
+
+    install_source.add_argument(
         '-f',
         '--file-name',
         action='store',
         dest='filename',
+        metavar='FILE',
         help='Restore the container from a local tar file. (default: SSSRCL.tar)',
+        default=None)
+
+    install_source.add_argument(
+        '-vn',
+        '--image-version',
+        action='store',
+        dest='image_version',
+        metavar='VERSION',
+        help='RCL Server version to be deployed. (default: 7.0.1.0)',
         default=None)
 
     parser.add_argument(
@@ -53,17 +74,20 @@ def parse_arguments():
         help='Name of the interface connected to the campus network. (default: campus)',
         default=None)
 
-    parser.add_argument(
-        '-vn',
-        '--image-version',
-        action='store',
-        dest='image_version',
-        help='RCL Server version to be deployed. (default: 7.0.1.0)',
-        default=None)
-
     args = parser.parse_args()
 
-    return args.verbose, args.filename, args.campus_interface, args.image_version
+    if args.delete:
+        start_only_args = [
+            ('-f/--file-name', args.filename),
+            ('-vn/--image-version', args.image_version),
+            ('-i/--campus-interface', args.campus_interface),
+        ]
+        invalid_passed = [opt for opt, val in start_only_args if val is not None]
+        if invalid_passed:
+            parser.error(f"The following argument(s) cannot be used with -d/--delete: {', '.join(invalid_passed)}")
+
+    return args.verbose, args.filename, args.campus_interface, args.image_version, \
+        args.delete
 
 
 def copyLogs():
@@ -81,13 +105,19 @@ def copyLogs():
 
 
 def main():
-    verbose, filename, campus_interface, image_version = parse_arguments()
+    verbose, filename, campus_interface, image_version, delete = parse_arguments()
     our_yml = rclmgr_yml(
         verbose,
         filename,
         campus_interface,
         image_version
     )
+
+    if delete:
+        our_yml.run_log.info("Going to delete the RCL service container.")
+        our_yml.delete_container()
+        sys.exit(0)
+
     # We need to ensure exit before this if clean up
     our_yml.run_log.debug("Going to invoke input data method from main program")
     entries_NOK = our_yml.startRCLContainer()

@@ -39,7 +39,7 @@ CONTAINER:
     # Container image version detail
     # ------------------------------------------------------
     # Image Name
-    IMAGE_NAME: preprod.icr.io/cp/scalesystem/sss_rcl
+    IMAGE_NAME: preprod.icr.io/cp/scale-devops/scalesystem/sss_rcl
 
     # Image Version
     IMAGE_VERSION: 7.0.2.0

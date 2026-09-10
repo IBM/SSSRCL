@@ -60,7 +60,7 @@ STATIC_rclmgr_YML = {
     'CONTAINER_HOSTNAME': 'utilityBareMetal-rcl-official',
     'RAS_INTERFACE': 'virbr1',
     'RAS_INTERFACE_IP': '10.23.16.1',
-    'IMAGE_NAME': 'preprod.icr.io/cp/scalesystem/sss_rcl',
+    'IMAGE_NAME': 'preprod.icr.io/cp/scale-devops/scalesystem/sss_rcl',
     'SSH_PORT': '10022',
     'LOG': '/home/rcladmin/log',
     'BKUP': '/home/rcladmin/backup'
@@ -936,6 +936,8 @@ class rclmgr_yml(object):
         )
 
         try:
+            self.run_log.debug("Going to delete existing rclmgr container and service")
+            rclmgr.delete_container()
             self.run_log.debug("Going to run rclmgr runcont")
             rclmgr.run_container(input0, True)
         except BaseException:
@@ -947,6 +949,47 @@ class rclmgr_yml(object):
             self.run_log.debug("Going to terminate with RC 24")
             sys.exit(24)
         self.run_log.debug("We are back from rclmgr runcont normal mode")
+        return True
+
+    def delete_container(self):
+        """Delete the RCL service container and its systemd service unit."""
+        try:
+            self.run_log.debug("Going to import rclmgr")
+            import classes.rclmgr as rclmgr
+            self.run_log.debug("Imported rclmgr")
+        except ImportError:
+            self.run_log.error("Cannot import rclmgr")
+            self.run_log.debug("Going to terminate with RC 22")
+            sys.exit(22)
+        input0 = argparse.Namespace(
+            config_file='rclmgr.yml',
+            force=False,
+            image_file_name=None,
+            install=False,
+            create_network=False,
+            network_name="ess_network",
+            run=False,
+            delete=True
+            )
+        self.run_log.debug("Going to readconf with rclmgr")
+        try:
+            rclmgr.readconf(input0)
+            self.run_log.debug("Success readconf with rclmgr")
+        except BaseException:
+            self.run_log.error("Could not readconf with rclmgr")
+            self.run_log.debug("Going to terminate with RC 23")
+            sys.exit(23)
+        try:
+            self.run_log.debug("Going to delete rclmgr container and service")
+            rclmgr.delete_container()
+            self.run_log.debug("Delete completed")
+        except BaseException:
+            self.run_log.error(
+                "The container delete returned a non zero exit. "
+                "Check the messages above."
+            )
+            self.run_log.debug("Going to terminate with RC 25")
+            sys.exit(25)
         return True
 
     def __podman_bin_exists(self):
