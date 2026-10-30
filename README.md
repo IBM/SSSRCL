@@ -31,7 +31,7 @@ Options:
   -f,  --file-name FILE          Restore the container from a local tar file.
                                  (default: SSSRCL.tar)
   -vn, --image-version VER       RCL container image version to deploy.
-                                 (default: 7.0.2.0)
+                                 (default: 7.0.1.2)
 
   Options (start only, not valid with -d/--delete):
   -i,  --campus-interface IF     Name of the interface connected to the campus
@@ -51,7 +51,7 @@ Options:
 ./startRCLContainer -vn 7.0.1.1
 
 # Override the campus interface
-./startRCLContainer -vn 7.0.2.0 -i eth0
+./startRCLContainer -vn 7.0.1.2 -i eth0
 
 # Verbose output
 ./startRCLContainer -v
@@ -140,7 +140,7 @@ CONTAINER:
     SSH_PORT: 10022                    # IBM Service Portal SSH port
 
     IMAGE_NAME: cp.icr.io/cp/scalesystem/sss_rcl
-    IMAGE_VERSION: 7.0.2.0
+    IMAGE_VERSION: 7.0.1.2
 
     LOG:  /home/rcladmin/log
     BKUP: /home/rcladmin/backup
